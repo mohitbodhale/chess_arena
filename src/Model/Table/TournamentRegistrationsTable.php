@@ -23,10 +23,10 @@ use Cake\Validation\Validator;
  * @method array<\App\Model\Entity\TournamentRegistration> patchEntities(iterable $entities, array $data, array $options = [])
  * @method \App\Model\Entity\TournamentRegistration|false save(\Cake\Datasource\EntityInterface $entity, array $options = [])
  * @method \App\Model\Entity\TournamentRegistration saveOrFail(\Cake\Datasource\EntityInterface $entity, array $options = [])
- * @method iterable<\App\Model\Entity\TournamentRegistration>|\Cake\Datasource\ResultSetInterface<\App\Model\Entity\TournamentRegistration>|false saveMany(iterable $entities, array $options = [])
- * @method iterable<\App\Model\Entity\TournamentRegistration>|\Cake\Datasource\ResultSetInterface<\App\Model\Entity\TournamentRegistration> saveManyOrFail(iterable $entities, array $options = [])
- * @method iterable<\App\Model\Entity\TournamentRegistration>|\Cake\Datasource\ResultSetInterface<\App\Model\Entity\TournamentRegistration>|false deleteMany(iterable $entities, array $options = [])
- * @method iterable<\App\Model\Entity\TournamentRegistration>|\Cake\Datasource\ResultSetInterface<\App\Model\Entity\TournamentRegistration> deleteManyOrFail(iterable $entities, array $options = [])
+ * @method iterable<\App\Model\Entity\TournamentRegistration>|\Cake\ORM\ResultSetInterface<\App\Model\Entity\TournamentRegistration>|false saveMany(iterable $entities, array $options = [])
+ * @method iterable<\App\Model\Entity\TournamentRegistration>|\Cake\ORM\ResultSetInterface<\App\Model\Entity\TournamentRegistration>|false saveManyOrFail(iterable $entities, array $options = [])
+ * @method iterable<\App\Model\Entity\TournamentRegistration>|\Cake\ORM\ResultSetInterface<\App\Model\Entity\TournamentRegistration>|false deleteMany(iterable $entities, array $options = [])
+ * @method iterable<\App\Model\Entity\TournamentRegistration>|\Cake\ORM\ResultSetInterface<\App\Model\Entity\TournamentRegistration>|false deleteManyOrFail(iterable $entities, array $options = [])
  */
 class TournamentRegistrationsTable extends Table
 {
@@ -55,6 +55,25 @@ class TournamentRegistrationsTable extends Table
     }
 
     /**
+     * The standings of a contest, ordered by the ranking rules.
+     *
+     * @param \Cake\ORM\Query\SelectQuery $query The query.
+     * @param array<string, mixed> $options Finder options.
+     * @return \Cake\ORM\Query\SelectQuery
+     */
+    public function findStanding(SelectQuery $query, array $options = []): SelectQuery
+    {
+        return $query
+            ->orderBy([
+                'TournamentRegistrations.score' => 'DESC',
+                'TournamentRegistrations.time_bonus' => 'DESC',
+                'TournamentRegistrations.wins' => 'DESC',
+                'Users.rating' => 'DESC',
+                'TournamentRegistrations.id' => 'ASC',
+            ]);
+    }
+
+    /**
      * Default validation rules.
      *
      * @param \Cake\Validation\Validator $validator Validator instance.
@@ -72,15 +91,43 @@ class TournamentRegistrationsTable extends Table
 
         $validator
             ->decimal('score')
+            ->greaterThanOrEqual('score', 0)
             ->allowEmptyString('score');
 
         $validator
+            ->decimal('time_bonus')
+            ->greaterThanOrEqual('time_bonus', 0)
+            ->allowEmptyString('time_bonus');
+
+        $validator
+            ->integer('wins')
+            ->greaterThanOrEqual('wins', 0)
+            ->allowEmptyString('wins');
+
+        $validator
+            ->integer('draws')
+            ->greaterThanOrEqual('draws', 0)
+            ->allowEmptyString('draws');
+
+        $validator
+            ->integer('losses')
+            ->greaterThanOrEqual('losses', 0)
+            ->allowEmptyString('losses');
+
+        $validator
             ->integer('rank')
+            ->greaterThanOrEqual('rank', 0)
             ->allowEmptyString('rank');
 
         $validator
             ->decimal('prize_won')
+            ->greaterThanOrEqual('prize_won', 0)
             ->allowEmptyString('prize_won');
+
+        $validator
+            ->scalar('status')
+            ->inList('status', ['Registered', 'Active', 'Eliminated', 'Finished'])
+            ->notEmptyString('status');
 
         $validator
             ->dateTime('registered_at')
@@ -100,6 +147,7 @@ class TournamentRegistrationsTable extends Table
     {
         $rules->add($rules->existsIn(['tournament_id'], 'Tournaments'), ['errorField' => 'tournament_id']);
         $rules->add($rules->existsIn(['user_id'], 'Users'), ['errorField' => 'user_id']);
+        $rules->add($rules->isUnique(['tournament_id', 'user_id']), ['errorField' => 'user_id']);
 
         return $rules;
     }

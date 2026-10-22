@@ -13,6 +13,7 @@ use Cake\Validation\Validator;
  *
  * @property \App\Model\Table\RolesTable&\Cake\ORM\Association\BelongsTo $Roles
  * @property \App\Model\Table\TournamentRegistrationsTable&\Cake\ORM\Association\HasMany $TournamentRegistrations
+ * @property \App\Model\Table\WalletTransactionsTable&\Cake\ORM\Association\HasMany $WalletTransactions
  *
  * @method \App\Model\Entity\User newEmptyEntity()
  * @method \App\Model\Entity\User newEntity(array $data, array $options = [])
@@ -23,10 +24,10 @@ use Cake\Validation\Validator;
  * @method array<\App\Model\Entity\User> patchEntities(iterable $entities, array $data, array $options = [])
  * @method \App\Model\Entity\User|false save(\Cake\Datasource\EntityInterface $entity, array $options = [])
  * @method \App\Model\Entity\User saveOrFail(\Cake\Datasource\EntityInterface $entity, array $options = [])
- * @method iterable<\App\Model\Entity\User>|\Cake\Datasource\ResultSetInterface<\App\Model\Entity\User>|false saveMany(iterable $entities, array $options = [])
- * @method iterable<\App\Model\Entity\User>|\Cake\Datasource\ResultSetInterface<\App\Model\Entity\User> saveManyOrFail(iterable $entities, array $options = [])
- * @method iterable<\App\Model\Entity\User>|\Cake\Datasource\ResultSetInterface<\App\Model\Entity\User>|false deleteMany(iterable $entities, array $options = [])
- * @method iterable<\App\Model\Entity\User>|\Cake\Datasource\ResultSetInterface<\App\Model\Entity\User> deleteManyOrFail(iterable $entities, array $options = [])
+ * @method iterable<\App\Model\Entity\User>|\Cake\ORM\ResultSetInterface<\App\Model\Entity\User>|false saveMany(iterable $entities, array $options = [])
+ * @method iterable<\App\Model\Entity\User>|\Cake\ORM\ResultSetInterface<\App\Model\Entity\User>|false saveManyOrFail(iterable $entities, array $options = [])
+ * @method iterable<\App\Model\Entity\User>|\Cake\ORM\ResultSetInterface<\App\Model\Entity\User>|false deleteMany(iterable $entities, array $options = [])
+ * @method iterable<\App\Model\Entity\User>|\Cake\ORM\ResultSetInterface<\App\Model\Entity\User>|false deleteManyOrFail(iterable $entities, array $options = [])
  */
 class UsersTable extends Table
 {
@@ -51,6 +52,25 @@ class UsersTable extends Table
         $this->hasMany('TournamentRegistrations', [
             'foreignKey' => 'user_id',
         ]);
+        $this->hasMany('WalletTransactions', [
+            'foreignKey' => 'user_id',
+            'dependent' => false,
+        ]);
+    }
+
+    /**
+     * Finder used by the authentication identifier.
+     *
+     * The role association is always loaded so that authorization decisions do
+     * not need an extra query per request.
+     *
+     * @param \Cake\ORM\Query\SelectQuery $query The query.
+     * @param array<string, mixed> $options Finder options.
+     * @return \Cake\ORM\Query\SelectQuery
+     */
+    public function findForAuth(SelectQuery $query, array $options = []): SelectQuery
+    {
+        return $query->contain(['Roles']);
     }
 
     /**
@@ -95,6 +115,14 @@ class UsersTable extends Table
         $validator
             ->integer('rating')
             ->allowEmptyString('rating');
+
+        $validator
+            ->scalar('status')
+            ->inList('status', ['Active', 'Suspended']);
+
+        $validator
+            ->dateTime('last_login_at')
+            ->allowEmptyDateTime('last_login_at');
 
         $validator
             ->dateTime('created_at')

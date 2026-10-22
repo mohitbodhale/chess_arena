@@ -9,14 +9,24 @@ declare(strict_types=1);
  * For full copyright and license information, please see the LICENSE.txt
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
- * @link      https://cakephp.org CakePHP(tm) Project
- * @since     3.3.0
- * @license   https://opensource.org/licenses/mit-license.php MIT License
+ * @copyright     Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
+ * @link          https://cakephp.org CakePHP(tm) Project
+ * @since         3.3.0
+ * @license       https://opensource.org/licenses/mit-license.php MIT License
  */
 namespace App;
 
+use App\Authorization\AuthorizationServiceProvider;
+use App\Auth\Identifier\PrimaryKeyIdentifier;
 use App\Middleware\HostHeaderMiddleware;
+use Authentication\AuthenticationService;
+use Authentication\AuthenticationServiceInterface;
+use Authentication\AuthenticationServiceProviderInterface;
+use Authentication\Identifier\PasswordIdentifier;
+use Authentication\Identifier\Resolver\OrmResolver;
+use Authentication\Middleware\AuthenticationMiddleware;
+use Authorization\Exception\MissingIdentityException;
+use Authorization\Middleware\AuthorizationMiddleware;
 use Cake\Core\Configure;
 use Cake\Core\ContainerInterface;
 use Cake\Datasource\FactoryLocator;
@@ -29,6 +39,8 @@ use Cake\Http\MiddlewareQueue;
 use Cake\ORM\Locator\TableLocator;
 use Cake\Routing\Middleware\AssetMiddleware;
 use Cake\Routing\Middleware\RoutingMiddleware;
+use Cake\Routing\Router;
+use Psr\Http\Message\ServerRequestInterface;
 
 /**
  * Application setup class.
@@ -38,7 +50,7 @@ use Cake\Routing\Middleware\RoutingMiddleware;
  *
  * @extends \Cake\Http\BaseApplication<\App\Application>
  */
-class Application extends BaseApplication
+class Application extends BaseApplication implements AuthenticationServiceProviderInterface
 {
     /**
      * Load all the application configuration and bootstrap logic.
@@ -49,6 +61,9 @@ class Application extends BaseApplication
     {
         // Call parent to load bootstrap from files.
         parent::bootstrap();
+
+        $this->addPlugin('Authentication');
+        $this->addPlugin('Authorization');
 
         // By default, does not allow fallback classes.
         FactoryLocator::add(
@@ -95,9 +110,82 @@ class Application extends BaseApplication
             // https://book.cakephp.org/5/en/security/csrf.html#cross-site-request-forgery-csrf-middleware
             ->add(new CsrfProtectionMiddleware([
                 'httponly' => true,
+            ]))
+
+            // Identify the player and keep the session alive.
+            ->add(new AuthenticationMiddleware($this))
+
+            // Apply the role based access control to the identified player.
+            ->add(new AuthorizationMiddleware(new AuthorizationServiceProvider(), [
+                'requireAuthorizationCheck' => false,
+                'unauthorizedHandler' => [
+                    'className' => 'Authorization.Redirect',
+                    'exceptions' => [MissingIdentityException::class],
+                    'url' => ['controller' => 'Users', 'action' => 'login'],
+                    'queryParam' => 'redirect',
+                ],
             ]));
 
         return $middlewareQueue;
+    }
+
+    /**
+     * The authentication service of the arena.
+     *
+     * @param \Psr\Http\Message\ServerRequestInterface $request The request.
+     * @return \Authentication\AuthenticationServiceInterface
+     */
+    public function getAuthenticationService(ServerRequestInterface $request): AuthenticationServiceInterface
+    {
+        $service = new AuthenticationService([
+            'unauthenticatedRedirect' => Router::url(['_name' => 'login']),
+            'queryParam' => 'redirect',
+        ]);
+
+        $fields = [
+            'username' => 'email',
+            'password' => 'password',
+        ];
+
+        $service->loadAuthenticator('Authentication.Form', [
+            'fields' => $fields,
+            'loginUrl' => Router::url(['_name' => 'login']),
+            'identifier' => [
+                'Password' => [
+                    'className' => PasswordIdentifier::class,
+                    'fields' => $fields,
+                    'resolver' => [
+                        'className' => OrmResolver::class,
+                        'finder' => 'forAuth',
+                    ],
+                ],
+            ],
+        ]);
+
+        $service->loadAuthenticator('Authentication.PrimaryKeySession', [
+            'sessionKey' => 'Auth',
+            'identifier' => [
+                'PrimaryKey' => [
+                    'className' => PrimaryKeyIdentifier::class,
+                    'resolver' => [
+                        'className' => OrmResolver::class,
+                        'finder' => 'forAuth',
+                    ],
+                ],
+            ],
+        ]);
+
+        return $service;
+    }
+
+    /**
+     * The authorization service provider of the arena.
+     *
+     * @return \Authorization\AuthorizationServiceProviderInterface
+     */
+    public function authorization(): \Authorization\AuthorizationServiceProviderInterface
+    {
+        return new AuthorizationServiceProvider();
     }
 
     /**

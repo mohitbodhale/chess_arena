@@ -1,10 +1,12 @@
 <?php
+declare(strict_types=1);
+
 /**
  * Routes configuration.
  *
  * In this file, you set up routes to your controllers and their actions.
  * Routes are very important mechanism that allows you to freely connect
- * different URLs to chosen controllers and their actions (functions).
+ * different URLs to chosen controllers and their actions.
  *
  * It's loaded within the context of `Application::routes()` method which
  * receives a `RouteBuilder` instance `$routes` as method argument.
@@ -18,6 +20,7 @@
  *
  * @copyright     Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
  * @link          https://cakephp.org CakePHP(tm) Project
+ * @since         0.10.0
  * @license       https://opensource.org/licenses/mit-license.php MIT License
  */
 
@@ -39,58 +42,69 @@ return function (RouteBuilder $routes): void {
      * - Route
      * - InflectedRoute
      * - DashedRoute
-     *
-     * If no call is made to `Router::defaultRouteClass()`, the class used is
-     * `Route` (`Cake\Routing\Route\Route`)
-     *
-     * Note that `Route` does not do any inflections on URLs which will result in
-     * inconsistently cased URLs when used with `{plugin}`, `{controller}` and
-     * `{action}` markers.
      */
     $routes->setRouteClass(DashedRoute::class);
 
     $routes->scope('/', function (RouteBuilder $builder): void {
         /*
-         * Here, we are connecting '/' (base path) to a controller called 'Pages',
-         * its action called 'display', and we pass a param to select the view file
-         * to use (in this case, templates/Pages/home.php)...
+         * The cinematic landing page of the arena.
          */
-        $builder->connect('/', ['controller' => 'Pages', 'action' => 'display', 'home']);
+        $builder->connect('/', ['controller' => 'Users', 'action' => 'welcome'], ['_name' => 'landing']);
 
         /*
-         * ...and connect the rest of 'Pages' controller's URLs.
+         * Authentication.
          */
-        $builder->connect('/pages/*', 'Pages::display');
+        $builder->connect('/login', ['controller' => 'Users', 'action' => 'login'], ['_name' => 'login']);
+        $builder->connect('/register', ['controller' => 'Users', 'action' => 'register'], ['_name' => 'register']);
+        $builder->connect('/logout', ['controller' => 'Users', 'action' => 'logout'], ['_name' => 'logout']);
+
+        /*
+         * The tournament lobby and the leaderboards.
+         */
+        $builder->connect('/lobby', ['controller' => 'Tournaments', 'action' => 'lobby'], ['_name' => 'lobby']);
+        $builder->connect(
+            '/my-contests',
+            ['controller' => 'Tournaments', 'action' => 'mine'],
+            ['_name' => 'my_contests'],
+        );
+        $builder->connect(
+            '/leaderboard',
+            ['controller' => 'Leaderboard', 'action' => 'index'],
+            ['_name' => 'leaderboard'],
+        );
+
+        /*
+         * The live arena.
+         */
+        $builder->connect(
+            '/matches/play/{id}',
+            ['controller' => 'Matches', 'action' => 'play'],
+            ['_name' => 'match_play'],
+        )->setPass(['id'])->setPatterns(['id' => '\d+']);
+        $builder->connect(
+            '/matches/move/{id}',
+            ['controller' => 'Matches', 'action' => 'move'],
+            ['_name' => 'match_move'],
+        )->setPass(['id'])->setPatterns(['id' => '\d+']);
+        $builder->connect(
+            '/matches/state/{id}',
+            ['controller' => 'Matches', 'action' => 'state'],
+            ['_name' => 'match_state'],
+        )->setPass(['id'])->setPatterns(['id' => '\d+']);
+
+        /*
+         * The control rooms.
+         */
+        $builder->connect('/admin', ['controller' => 'Admin', 'action' => 'dashboard'], ['_name' => 'admin_dashboard']);
+        $builder->connect(
+            '/organizer',
+            ['controller' => 'Organizer', 'action' => 'dashboard'],
+            ['_name' => 'organizer_dashboard'],
+        );
 
         /*
          * Connect catchall routes for all controllers.
-         *
-         * The `fallbacks` method is a shortcut for
-         *
-         * ```
-         * $builder->connect('/{controller}', ['action' => 'index']);
-         * $builder->connect('/{controller}/{action}/*', []);
-         * ```
-         *
-         * It is NOT recommended to use fallback routes after your initial prototyping phase!
-         * See https://book.cakephp.org/5/en/development/routing.html#fallbacks-method for more information
          */
         $builder->fallbacks();
     });
-
-    /*
-     * If you need a different set of middleware or none at all,
-     * open new scope and define routes there.
-     *
-     * ```
-     * $routes->scope('/api', function (RouteBuilder $builder): void {
-     *     // No $builder->applyMiddleware() here.
-     *
-     *     // Parse specified extensions from URLs
-     *     // $builder->setExtensions(['json', 'xml']);
-     *
-     *     // Connect API actions here.
-     * });
-     * ```
-     */
 };

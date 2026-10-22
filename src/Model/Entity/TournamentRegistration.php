@@ -11,9 +11,14 @@ use Cake\ORM\Entity;
  * @property int $id
  * @property int $tournament_id
  * @property int $user_id
- * @property string|null $score
- * @property int|null $rank
- * @property string|null $prize_won
+ * @property string $score
+ * @property string $time_bonus
+ * @property int $wins
+ * @property int $draws
+ * @property int $losses
+ * @property int $rank
+ * @property string $prize_won
+ * @property string $status
  * @property \Cake\I18n\DateTime $registered_at
  *
  * @property \App\Model\Entity\Tournament $tournament
@@ -34,10 +39,45 @@ class TournamentRegistration extends Entity
         'tournament_id' => true,
         'user_id' => true,
         'score' => true,
+        'time_bonus' => true,
+        'wins' => true,
+        'draws' => true,
+        'losses' => true,
         'rank' => true,
         'prize_won' => true,
+        'status' => true,
         'registered_at' => true,
         'tournament' => true,
         'user' => true,
     ];
+
+    /**
+     * Total points collected by the player.
+     *
+     * @return float
+     */
+    public function points(): float
+    {
+        return (float)$this->get('score');
+    }
+
+    /**
+     * Time bonus points collected by the player.
+     *
+     * @return float
+     */
+    public function bonus(): float
+    {
+        return (float)$this->get('time_bonus');
+    }
+
+    /**
+     * Number of matches the player has taken part in.
+     *
+     * @return int
+     */
+    public function played(): int
+    {
+        return (int)$this->get('wins') + (int)$this->get('draws') + (int)$this->get('losses');
+    }
 }

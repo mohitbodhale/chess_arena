@@ -90,7 +90,7 @@ return [
      * enable timestamping regardless of debug value.
      */
     'Asset' => [
-        //'timestamp' => true,
+        'timestamp' => true,
         // 'cacheTime' => '+1 year'
     ],
 
