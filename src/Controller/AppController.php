@@ -71,6 +71,27 @@ class AppController extends Controller
     }
 
     /**
+     * Check that the current user has a permission.
+     *
+     * If the user lacks the permission, they are redirected to their home route
+     * with a flash error message.
+     *
+     * @param string $permission The capability identifier from Permission.
+     * @return \Psr\Http\Message\ResponseInterface|null Returns a redirect response if unauthorized.
+     */
+    protected function requirePermission(string $permission): ?\Psr\Http\Message\ResponseInterface
+    {
+        $user = $this->currentUser();
+        if ($user === null || !$user->hasPermission($permission)) {
+            $this->Flash->error('Your role does not allow access to this area.');
+            $home = $this->homeRouteFor($user);
+            return $this->redirect($home);
+        }
+
+        return null;
+    }
+
+    /**
      * The name of the signed in user, ready for the top bar.
      *
      * @return array<string, mixed>

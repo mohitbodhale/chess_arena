@@ -77,6 +77,18 @@ $this->assign('title', 'My contests');
                                 <span>Your standing</span>
                             </div>
                             <div class="d-flex" style="gap:.5rem;">
+                                <?php $myMatch = $myMatches[(int)$contest->get('id')] ?? null; ?>
+                                <?php if ($myMatch !== null && $myMatch->get('status') === 'Live') : ?>
+                                    <a class="btn-arena"
+                                       href="<?= $this->Url->build(['controller' => 'Matches', 'action' => 'play', $myMatch->get('id')]) ?>">
+                                        <i class="fas fa-circle-play"></i> Play now
+                                    </a>
+                                <?php elseif ($myMatch !== null) : ?>
+                                    <a class="btn-arena is-ghost"
+                                       href="<?= $this->Url->build(['controller' => 'Matches', 'action' => 'play', $myMatch->get('id')]) ?>">
+                                        Your board
+                                    </a>
+                                <?php endif; ?>
                                 <a class="btn-arena is-muted"
                                    href="<?= $this->Url->build(['controller' => 'Tournaments', 'action' => 'seats', $contest->get('id')]) ?>">
                                     Seats

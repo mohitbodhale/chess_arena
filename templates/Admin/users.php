@@ -59,6 +59,7 @@ foreach (RoleRegistry::ID_MAP as $roleId => $roleName) {
                         <th style="width:60px;">#</th>
                         <th>Player</th>
                         <th style="width:200px;">Email</th>
+                        <th style="width:160px;">Password</th>
                         <th style="width:100px;">Rating</th>
                         <th style="width:150px;">Wallet</th>
                         <th style="width:180px;">Role</th>
@@ -68,7 +69,7 @@ foreach (RoleRegistry::ID_MAP as $roleId => $roleName) {
                     <tbody>
                     <?php if (count($users) === 0) : ?>
                         <tr>
-                            <td colspan="7" class="muted" style="padding:2rem;text-align:center;">
+                            <td colspan="8" class="muted" style="padding:2rem;text-align:center;">
                                 No account matches this filter.
                             </td>
                         </tr>
@@ -78,6 +79,26 @@ foreach (RoleRegistry::ID_MAP as $roleId => $roleName) {
                             <td class="mono tiny"><?= (int)$user->get('id') ?></td>
                             <td><?= h((string)$user->get('username')) ?></td>
                             <td class="tiny muted"><?= h((string)$user->get('email')) ?></td>
+                            <td>
+                                <?= $this->Form->create(null, [
+                                    'url' => ['controller' => 'Admin', 'action' => 'changePassword'],
+                                    'type' => 'post',
+                                ]) ?>
+                                <?= $this->Form->hidden('user_id', ['value' => $user->get('id')]) ?>
+                                <div class="d-flex" style="gap:.35rem;">
+                                    <?= $this->Form->control('password', [
+                                        'type' => 'password',
+                                        'label' => false,
+                                        'class' => 'form-control form-control-sm',
+                                        'placeholder' => 'New password',
+                                    ]) ?>
+                                    <?= $this->Form->button('Set', [
+                                        'class' => 'btn-arena',
+                                        'style' => 'padding:.35rem .8rem;font-size:.78rem;',
+                                    ]) ?>
+                                </div>
+                                <?= $this->Form->end() ?>
+                            </td>
                             <td class="mono tiny"><?= (int)$user->get('rating') ?></td>
                             <td class="mono tiny">
                                 ₹<?= number_format((float)$user->get('deposit_balance'), 2) ?>

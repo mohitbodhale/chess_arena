@@ -92,15 +92,17 @@ class SeedCommand extends Command
 
         $io->out(sprintf('<info>Accounts ready</info>: %d', count($players) + 2));
 
+        $payouts = new \App\Service\Tournament\PayoutService();
+
         $blitz = $tournaments->create([
             'title' => 'Friday Night Blitz Championship',
             'category' => 'Blitz',
             'entry_fee' => 100,
             'max_slots' => 50,
-            'platform_fee' => 20,
-            'prize_breakdown' => (new \App\Service\Tournament\PayoutService())->templateRows('top3'),
+            'platform_fee' => 10,
+            'prize_breakdown' => $payouts->templateRows('top3'),
             'rules' => "Win = 3 points, draw = 1 point, loss = 0 points.\nUp to 2 time bonus points per game.",
-            'start_time' => date('Y-m-d H:i:s', strtotime('+2 hours')),
+            'start_time' => date('Y-m-d H:i:s', strtotime('-3 hours')),
         ], (int)$organizer->get('id'));
 
         $rapid = $tournaments->create([
@@ -108,10 +110,10 @@ class SeedCommand extends Command
             'category' => 'Rapid',
             'entry_fee' => 50,
             'max_slots' => 30,
-            'platform_fee' => 15,
-            'prize_breakdown' => (new \App\Service\Tournament\PayoutService())->templateRows('top5'),
+            'platform_fee' => 10,
+            'prize_breakdown' => $payouts->templateRows('top5'),
             'rules' => "Win = 3 points, draw = 1 point, loss = 0 points.",
-            'start_time' => date('Y-m-d H:i:s', strtotime('+1 day')),
+            'start_time' => date('Y-m-d H:i:s', strtotime('-2 hours')),
         ], (int)$organizer->get('id'));
 
         $bullet = $tournaments->create([
@@ -119,13 +121,24 @@ class SeedCommand extends Command
             'category' => 'Bullet',
             'entry_fee' => 25,
             'max_slots' => 100,
-            'platform_fee' => 25,
-            'prize_breakdown' => (new \App\Service\Tournament\PayoutService())->templateRows('top10'),
+            'platform_fee' => 10,
+            'prize_breakdown' => $payouts->templateRows('top10'),
             'rules' => "Sixty seconds a side. Fast hands only.",
             'start_time' => date('Y-m-d H:i:s', strtotime('-1 hour')),
         ], (int)$admin->get('id'));
 
-        $io->out('<info>Contests ready</info>: 3');
+        $open = $tournaments->create([
+            'title' => 'Weekend Rapid Arena',
+            'category' => 'Rapid',
+            'entry_fee' => 20,
+            'max_slots' => 40,
+            'platform_fee' => 10,
+            'prize_breakdown' => $payouts->templateRows('top5'),
+            'rules' => "Win = 3 points, draw = 1 point, loss = 0 points. Open for entries.",
+            'start_time' => date('Y-m-d H:i:s', strtotime('+2 days')),
+        ], (int)$organizer->get('id'));
+
+        $io->out('<info>Contests ready</info>: 4');
 
         foreach (array_slice($players, 0, 6) as $player) {
             $tournaments->join($blitz, $player);
@@ -134,28 +147,35 @@ class SeedCommand extends Command
         foreach (array_slice($players, 4, 4) as $player) {
             $tournaments->join($rapid, $player);
         }
+        foreach (array_slice($players, 0, 4) as $player) {
+            $tournaments->join($open, $player);
+        }
 
-        $io->out('<info>Seats sold</info>: 16');
+        $io->out('<info>Seats sold</info>: 20');
 
         $matches = new \App\Service\Tournament\MatchService();
-        $matches->start($bullet);
-        $io->out('<info>Contest started</info>: Bullet Blitz Hour');
 
-        $bulletMatches = $this->getTableLocator()->get('Matches')
-            ->find()
-            ->where(['Matches.tournament_id' => $bullet->get('id')])
-            ->all()
-            ->toList();
-        foreach ($bulletMatches as $match) {
-            $simulation->simulate($match, null, 40);
+        // Every finished contest pays 90% of the collected fees to the winners
+        // and leaves the commission with the arena.
+        foreach ([$blitz, $rapid, $bullet] as $contest) {
+            $matches->start($contest);
+            $games = $this->getTableLocator()->get('Matches')
+                ->find()
+                ->where(['Matches.tournament_id' => $contest->get('id')])
+                ->all()
+                ->toList();
+            foreach ($games as $game) {
+                $simulation->simulate($game, null, 40);
+            }
+
+            $settlement = $tournaments->settle($contest, (int)$admin->get('id'));
+            $io->out(sprintf(
+                '<info>Settled</info>: %s — ₹%s to the winners, ₹%s platform commission',
+                $contest->get('title'),
+                number_format(array_sum($settlement['payouts']), 2),
+                number_format($settlement['platform_revenue'], 2),
+            ));
         }
-        $io->out(sprintf('<info>Games simulated</info>: %d', count($bulletMatches)));
-
-        $settlement = $tournaments->settle($bullet, (int)$admin->get('id'));
-        $io->out(sprintf(
-            '<info>Prize money settled</info>: Bullet Blitz Hour (platform revenue ₹%s)',
-            number_format($settlement['platform_revenue'], 2),
-        ));
 
         $io->out('');
         $io->out('<success>The arena is ready.</success>');

@@ -319,7 +319,7 @@ class MatchService
             'increment_ms' => (int)$match->get('increment_ms'),
             'evaluation' => round($engine->evaluate(), 2),
             'in_check' => $engine->isCheck(),
-            'game_over' => $engine->isGameOver(),
+            'game_over' => $match->get('status') === 'Completed' || $engine->isGameOver(),
             'moves' => $moves,
         ];
     }

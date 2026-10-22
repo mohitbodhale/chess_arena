@@ -14,7 +14,8 @@ use App\Service\Tournament\SimulationService;
 use App\Service\Tournament\TimeControl;
 use App\Service\Tournament\TournamentService;
 use App\Service\Tournament\WalletService;
-
+use Psr\Http\Message\ResponseInterface;
+use Cake\Event\EventInterface;
 
 /**
  * The control room of the arena.
@@ -24,6 +25,15 @@ use App\Service\Tournament\WalletService;
  */
 class AdminController extends AppController
 {
+    public function beforeFilter(EventInterface $event): ?ResponseInterface
+    {
+        $user = $this->currentUser();
+        if ($user === null || $user->getRoleName() !== RoleRegistry::ADMIN) {
+            $this->Flash->error('Access denied: admin only.');
+            return $this->redirect($this->homeRouteFor($user));
+        }
+        return null;
+    }
     /**
      * @var \App\Model\Table\TournamentsTable
      */
@@ -99,6 +109,26 @@ class AdminController extends AppController
         $revenueQuery->where(['WalletTransactions.type' => 'platform_commission']);
         $platformRevenue = round((float)($revenueQuery->first()?->get('total') ?? 0), 2);
 
+        // The commission every contest owes, settled or still running.
+        $projectedRevenue = 0.0;
+        $commissionRows = [];
+        foreach ($this->Tournaments->find()->all() as $contest) {
+            $cut = $this->payoutService->platformCut($contest);
+            $projectedRevenue += $cut;
+            $commissionRows[] = [
+                'contest' => $contest,
+                'fee' => (float)$contest->get('platform_fee'),
+                'collected' => $this->payoutService->collected($contest),
+                'cut' => $cut,
+                'pool' => $this->payoutService->distributablePool($contest),
+            ];
+        }
+        $projectedRevenue = round($projectedRevenue, 2);
+        usort($commissionRows, function (array $a, array $b): int {
+            return $b['cut'] <=> $a['cut'];
+        });
+
+
 
         $ledger = $wallet->auditLedger(12);
 
@@ -147,6 +177,8 @@ class AdminController extends AppController
             'prizePool' => $prizePool,
             'collected' => $collected,
             'platformRevenue' => $platformRevenue,
+            'projectedRevenue' => $projectedRevenue,
+            'commissionRows' => $commissionRows,
             'registrationCount' => $registrations->find()->count(),
             'categoryChart' => $categoryChart,
             'statusChart' => $statusChart,
@@ -306,25 +338,17 @@ class AdminController extends AppController
         $tournament = $this->Tournaments->get($id);
         $this->Authorization->authorize($tournament, 'manage');
 
-        $registrations = $this->getTableLocator()->get('TournamentRegistrations');
-        $registration = $registrations->find()
-            ->where([
-                'tournament_id' => $tournament->get('id'),
-                'user_id' => $userId,
-            ])
-            ->first();
+        $result = $this->tournamentService->removePlayer(
+            $tournament,
+            (int)$userId,
+            $this->currentUserId(),
+        );
 
-        if ($registration === null) {
-            $this->Flash->error('That player is not registered for this contest.');
-
-            return $this->redirect(['action' => 'slots', $tournament->get('id')]);
+        if ($result['ok']) {
+            $this->Flash->success($result['message']);
+        } else {
+            $this->Flash->error($result['message']);
         }
-
-        $registrations->delete($registration);
-        $tournament->set('filled_slots', max(0, (int)$tournament->get('filled_slots') - 1));
-        $this->Tournaments->save($tournament);
-
-        $this->Flash->success('The player was removed from the contest.');
 
         return $this->redirect(['action' => 'slots', $tournament->get('id')]);
     }
@@ -529,6 +553,36 @@ class AdminController extends AppController
      *
      * @return \Cake\Http\Response|null
      */
+    /**
+     * Change a user's password.
+     *
+     * @return \\Cake\\Http\\Response|null
+     */
+    public function changePassword()
+    {
+        $this->request->allowMethod(['post']);
+
+        $users = $this->getTableLocator()->get('Users');
+        $user = $users->get($this->request->getData('user_id'));
+        $this->Authorization->authorize($user, 'manage');
+
+        $newPassword = (string)$this->request->getData('password');
+        if (strlen($newPassword) < 6) {
+            $this->Flash->error('Password must be at least 6 characters.');
+
+            return $this->redirect(['action' => 'users']);
+        }
+
+        $user->set('password', $newPassword);
+        if ($users->save($user)) {
+            $this->Flash->success(sprintf('Password changed for %s.', $user->get('username')));
+        } else {
+            $this->Flash->error('The password could not be changed.');
+        }
+
+        return $this->redirect(['action' => 'users']);
+    }
+
     public function setRole()
     {
         $this->request->allowMethod(['post']);
@@ -538,7 +592,7 @@ class AdminController extends AppController
         $this->Authorization->authorize($user, 'manage');
 
         $roleId = (int)$this->request->getData('role_id');
-        if (!in_array($roleId, RoleRegistry::ID_MAP, true)) {
+        if (!array_key_exists($roleId, RoleRegistry::ID_MAP)) {
             $this->Flash->error('Unknown role.');
 
             return $this->redirect(['action' => 'users']);

@@ -34,6 +34,7 @@ $title = $this->fetch('title') ?: 'Chess Arena';
         <div class="landing-links">
             <a href="<?= $this->Url->build('/lobby') ?>">Tournaments</a>
             <a href="<?= $this->Url->build('/leaderboard') ?>">Leaderboard</a>
+            <a href="<?= $this->Url->build('/pages/rules') ?>">Rules</a>
             <?php if ($currentRole === 'Admin') : ?>
                 <a href="<?= $this->Url->build('/admin') ?>">Admin</a>
             <?php elseif ($currentRole === 'Organizer') : ?>

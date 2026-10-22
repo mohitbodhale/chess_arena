@@ -26,8 +26,9 @@ $this->assign('title', 'Create account');
                 'autocomplete' => 'nickname',
                 'required' => true,
             ]) ?>
-            <?php if ($user->hasError('username')) : ?>
-                <div class="error"><?= h($user->getError('username')[0]) ?></div>
+            <?php $usernameError = $user->getError('username'); ?>
+            <?php if ($usernameError) : ?>
+                <div class="error"><?= h((string)$usernameError[0]) ?></div>
             <?php endif; ?>
         </div>
         <div class="field">
@@ -38,8 +39,9 @@ $this->assign('title', 'Create account');
                 'autocomplete' => 'email',
                 'required' => true,
             ]) ?>
-            <?php if ($user->hasError('email')) : ?>
-                <div class="error"><?= h($user->getError('email')[0]) ?></div>
+            <?php $emailError = $user->getError('email'); ?>
+            <?php if ($emailError) : ?>
+                <div class="error"><?= h((string)$emailError[0]) ?></div>
             <?php endif; ?>
         </div>
         <div class="field">
@@ -50,8 +52,9 @@ $this->assign('title', 'Create account');
                 'autocomplete' => 'new-password',
                 'required' => true,
             ]) ?>
-            <?php if ($user->hasError('password')) : ?>
-                <div class="error"><?= h($user->getError('password')[0]) ?></div>
+            <?php $passwordError = $user->getError('password'); ?>
+            <?php if ($passwordError) : ?>
+                <div class="error"><?= h((string)$passwordError[0]) ?></div>
             <?php endif; ?>
         </div>
         <button type="submit" class="btn-arena" style="width:100%;">

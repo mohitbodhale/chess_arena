@@ -62,6 +62,13 @@ $status = (string)$tournament->get('status');
                             ₹<?= number_format((float)$tournament->get('platform_revenue'), 2) ?>
                         </span>
                     </div>
+                <?php else : ?>
+                    <div class="d-flex justify-content-between mt-2" style="font-size:.9rem;">
+                        <span class="muted">Admin profit (projected)</span>
+                        <span class="mono" style="color:var(--accent);">
+                            ₹<?= number_format((float)$tournament->get('platform_cut'), 2) ?>
+                        </span>
+                    </div>
                 <?php endif; ?>
 
                 <div class="d-flex mt-3" style="gap:.5rem;">

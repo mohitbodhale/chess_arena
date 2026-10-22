@@ -89,7 +89,7 @@ if ($startValue instanceof \Cake\I18n\DateTime) {
                     <?= $this->Form->label('prize_pool', 'Prize pool (₹)') ?>
                     <?= $this->Form->text('prize_pool', [
                         'class' => 'form-control',
-                        'placeholder' => 'Auto: 80% of the collected fees',
+                        'placeholder' => 'Auto: 90% of the collected fees',
                     ]) ?>
                 </div>
             </div>
@@ -143,7 +143,7 @@ if ($startValue instanceof \Cake\I18n\DateTime) {
                         <?= $this->Form->label('platform_fee', 'Platform fee (%)') ?>
                         <?= $this->Form->text('platform_fee', [
                             'class' => 'form-control',
-                            'value' => $tournament->get('platform_fee') ?? '20.00',
+                            'value' => $tournament->get('platform_fee') ?? '10.00',
                             'required' => true,
                         ]) ?>
                         <div class="help">

@@ -65,6 +65,7 @@ $this->assign('title', 'Tournament lobby');
                         'contest' => $contest,
                         'isRegistered' => in_array((int)$contest->get('id'), $myContestIds, true),
                         'canJoin' => $canJoin,
+                        'myMatch' => $myMatches[(int)$contest->get('id')] ?? null,
                     ]) ?>
                 <?php endforeach; ?>
             </div>

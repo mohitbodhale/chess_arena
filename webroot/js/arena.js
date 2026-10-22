@@ -40,16 +40,33 @@
     var el = {
         whiteClock: document.querySelector('[data-clock="w"]'),
         blackClock: document.querySelector('[data-clock="b"]'),
-        whiteName: document.querySelector('[data-player="w"]'),
-        blackName: document.querySelector('[data-player="b"]'),
         whiteCard: document.querySelector('[data-card="w"]'),
         blackCard: document.querySelector('[data-card="b"]'),
         moves: document.getElementById('arena-moves'),
         evalFill: document.getElementById('arena-eval-fill'),
         evalLabel: document.getElementById('arena-eval-label'),
         banner: document.getElementById('arena-banner'),
-        status: document.getElementById('arena-status')
+        status: document.getElementById('arena-status'),
+        board: document.getElementById('arena-board'),
     };
+
+    var boardAnimation = {
+        lastFrame: null,
+        ticking: false,
+    };
+
+    function animateBoard() {
+        if (boardAnimation.ticking) {
+            return;
+        }
+
+        boardAnimation.ticking = true;
+        boardEl.classList.add('is-entering');
+        window.setTimeout(function () {
+            boardEl.classList.remove('is-entering');
+            boardAnimation.ticking = false;
+        }, 380);
+    }
 
     /* ------------------------------------------------------------------ */
     /* Rendering                                                           */
@@ -77,24 +94,30 @@
         return map;
     }
 
-    function squareColor(fileIndex, rankIndex) {
-        return (fileIndex + rankIndex) % 2 === 0 ? 'light' : 'dark';
+    function squareColor(fileIndex, rank) {
+        return (fileIndex + rank) % 2 === 1 ? 'dark' : 'light';
     }
 
     function buildBoard() {
         var pieces = parseFen(game.fen());
         var fragment = document.createDocumentFragment();
 
+        // The flipped board is rotated by 180 degrees, so the ranks run from 1
+        // to 8 and the files from h to a for the player sitting on the black side.
+        var ranks = flipped ? [1, 2, 3, 4, 5, 6, 7, 8] : [8, 7, 6, 5, 4, 3, 2, 1];
+        var fileIndexes = flipped ? [7, 6, 5, 4, 3, 2, 1, 0] : [0, 1, 2, 3, 4, 5, 6, 7];
+
         boardEl.innerHTML = '';
-        for (var rank = 8; rank >= 1; rank--) {
-            for (var fileIndex = 0; fileIndex < 8; fileIndex++) {
-                var file = FILES[flipped ? 7 - fileIndex : fileIndex];
-                var rankIndex = 8 - rank;
+        for (var row = 0; row < 8; row++) {
+            for (var column = 0; column < 8; column++) {
+                var fileIndex = fileIndexes[column];
+                var rank = ranks[row];
+                var file = FILES[fileIndex];
                 var square = file + rank;
                 var code = pieces[square];
 
                 var cell = document.createElement('div');
-                cell.className = 'square ' + squareColor(flipped ? 7 - fileIndex : fileIndex, rankIndex);
+                cell.className = 'square ' + squareColor(fileIndex, rank);
                 cell.dataset.square = square;
 
                 if (code) {
@@ -104,19 +127,17 @@
                     cell.appendChild(piece);
                 }
 
-                if (!flipped) {
-                    if (rank === 1) {
-                        var rankLabel = document.createElement('span');
-                        rankLabel.className = 'coord file';
-                        rankLabel.textContent = file;
-                        cell.appendChild(rankLabel);
-                    }
-                    if (fileIndex === 0) {
-                        var fileLabel = document.createElement('span');
-                        fileLabel.className = 'coord rank';
-                        fileLabel.textContent = rank;
-                        cell.appendChild(fileLabel);
-                    }
+                if (row === 7) {
+                    var fileLabel = document.createElement('span');
+                    fileLabel.className = 'coord file';
+                    fileLabel.textContent = file;
+                    cell.appendChild(fileLabel);
+                }
+                if (column === 0) {
+                    var rankLabel = document.createElement('span');
+                    rankLabel.className = 'coord rank';
+                    rankLabel.textContent = rank;
+                    cell.appendChild(rankLabel);
                 }
 
                 fragment.appendChild(cell);
@@ -125,6 +146,7 @@
 
         boardEl.appendChild(fragment);
         highlightLastMove();
+        animateBoard();
     }
 
     function highlightLastMove() {

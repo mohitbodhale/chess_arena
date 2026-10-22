@@ -1285,15 +1285,27 @@ body.admin-body {
     border-radius: 6px;
     background: #2A2F36;
     overflow: hidden;
+    border: 1px solid var(--line);
+    transition: all 0.3s ease;
+}
+
+.eval-bar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.15);
 }
 
 .eval-bar span {
     position: absolute;
     left: 0;
     bottom: 0;
-    width: 100%;
+    width: 50%;
     background: linear-gradient(180deg, #F2F5F7, #C9D1D8);
-    transition: height 0.4s ease;
+    transition: height 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 .eval-bar i {
@@ -1303,95 +1315,235 @@ body.admin-body {
     place-items: center;
     font-style: normal;
     font-family: var(--mono);
-    font-size: 0.6rem;
-    color: var(--text-dim);
-    writing-mode: vertical-rl;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text);
+    z-index: 1;
 }
 
 .board {
     display: grid;
     grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr);
     aspect-ratio: 1;
     border-radius: 14px;
     overflow: hidden;
     border: 1px solid var(--line);
     box-shadow: var(--shadow);
     user-select: none;
+    transition: transform 0.2s ease;
+    /* The pieces scale with the board, never with the viewport. */
+    container-type: inline-size;
+}
+
+.board.is-entering .square {
+    animation: squareIn 0.34s ease both;
+}
+
+@keyframes squareIn {
+    from {
+        opacity: 0;
+        transform: scale(0.94);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* The player whose turn it is is highlighted on the board frame. */
+.player-card {
+    padding: 0.35rem 0.5rem 0.35rem 0.35rem;
+    margin-left: -0.35rem;
+    border-radius: 12px;
+    border: 1px solid transparent;
+    opacity: 0.6;
+    transition: opacity 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+}
+
+.player-card.is-turn {
+    opacity: 1;
+    background: rgba(0, 208, 156, 0.06);
+    border-color: rgba(0, 208, 156, 0.35);
+}
+
+.player-card.is-turn .avatar {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0, 208, 156, 0.14);
+}
+
+.player-card [data-player]::after {
+    content: 'to move';
+    margin-left: 0.45rem;
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+.player-card.is-turn [data-player]::after {
+    opacity: 1;
+}
+
+.board:hover {
+    transform: scale(1.02);
 }
 
 .square {
     position: relative;
     display: grid;
     place-items: center;
-    font-size: clamp(1.6rem, 4.4vw, 2.9rem);
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
     line-height: 1;
     cursor: pointer;
+    transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.square:hover {
+    background-color: rgba(255, 255, 255, 0.05);
 }
 
 .square.light {
     background: #2C333B;
+    transition: background 0.2s ease;
 }
 
 .square.dark {
     background: #1B1F24;
+    transition: background 0.2s ease;
 }
 
 .square .piece {
     position: relative;
     z-index: 2;
     pointer-events: none;
+    transition: transform 0.15s ease, rotate 0.1s ease;
+    font-weight: 700;
+    /* Fallback for browsers without container query units. */
+    font-size: clamp(1.4rem, 7.8vw, 2.9rem);
+    /* One square is 12.5cqw wide, so the glyph keeps a constant ratio. */
+    font-size: clamp(1.2rem, 7.8cqw, 3.1rem);
+    line-height: 1;
+}
+
+.square:hover .piece {
+    transform: scale(1.1);
+    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.3));
+}
+
+.square.is-selected .piece {
+    animation: piecePop 0.2s ease forwards;
+}
+
+@keyframes piecePop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+    100% { transform: scale(1); }
 }
 
 .square .piece.is-white {
     color: #F4F7F9;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.65);
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.7), 0 0 4px rgba(255, 255, 255, 0.2);
 }
 
 .square .piece.is-black {
     color: #101317;
-    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.16);
+    text-shadow: 0 2px 6px rgba(255, 255, 255, 0.2), 0 0 4px rgba(0, 0, 0, 0.5);
+}
+
+.square .piece.is-white::after {
+    content: '';
+    position: absolute;
+    inset: -8%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.08) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.square .piece.is-black::after {
+    content: '';
+    position: absolute;
+    inset: -8%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0, 0, 0, 0.25) 0%, transparent 70%);
+    pointer-events: none;
 }
 
 .square.is-selected {
-    box-shadow: inset 0 0 0 3px var(--accent);
+    box-shadow: inset 0 0 0 4px var(--accent);
+    animation: selectPulse 0.6s ease-in-out infinite alternate 1;
+}
+
+@keyframes selectPulse {
+    from { box-shadow: inset 0 0 0 4px var(--accent); }
+    to { box-shadow: inset 0 0 0 6px var(--accent-deep); }
 }
 
 .square.is-target::after {
     content: '';
     position: absolute;
     inset: 0;
-    background: radial-gradient(circle at center, rgba(0, 208, 156, 0.55) 0 16%, transparent 17%);
+    background: radial-gradient(circle at center, rgba(0, 208, 156, 0.6) 0 18%, transparent 19%);
     pointer-events: none;
+    animation: targetFade 1s ease-in-out infinite;
+}
+
+@keyframes targetFade {
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 1; }
 }
 
 .square.is-target.is-capture::after {
-    background: radial-gradient(circle at center, transparent 0 42%, rgba(0, 208, 156, 0.5) 43% 52%, transparent 53%);
+    background: radial-gradient(circle at center, transparent 0 40%, rgba(0, 208, 156, 0.6) 41% 50%, transparent 51%);
 }
 
 .square.is-last {
-    background-image: linear-gradient(rgba(0, 208, 156, 0.28), rgba(0, 208, 156, 0.28));
+    background-image: linear-gradient(135deg, rgba(0, 208, 156, 0.32) 0%, rgba(0, 208, 156, 0.15) 100%);
+    animation: lastGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes lastGlow {
+    from { background-image: linear-gradient(135deg, rgba(0, 208, 156, 0.32) 0%, rgba(0, 208, 156, 0.15) 100%); }
+    to { background-image: linear-gradient(135deg, rgba(0, 208, 156, 0.45) 0%, rgba(0, 208, 156, 0.25) 100%); }
 }
 
 .square.is-check {
-    background-image: radial-gradient(circle at center, rgba(255, 92, 122, 0.55), rgba(255, 92, 122, 0.15));
+    background-image: radial-gradient(circle at center, rgba(255, 92, 122, 0.6) 0%, transparent 18%);
+    animation: checkPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes checkPulse {
+    0%, 100% { background-image: radial-gradient(circle at center, rgba(255, 92, 122, 0.6) 0%, transparent 18%); }
+    50% { background-image: radial-gradient(circle at center, rgba(255, 92, 122, 0.8) 0%, transparent 15%); }
 }
 
 .square .coord {
     position: absolute;
-    font-size: 0.55rem;
+    font-size: 0.65rem;
     font-family: var(--mono);
-    color: rgba(255, 255, 255, 0.32);
+    color: rgba(255, 255, 255, 0.45);
     pointer-events: none;
+    transition: transform 0.1s ease;
+}
+
+.square:hover .coord {
+    transform: scale(1.3) scale(0.8);
+    color: var(--accent);
+    opacity: 1;
 }
 
 .square .coord.file {
-    right: 3px;
-    bottom: 1px;
+    right: 6px;
+    bottom: 2px;
 }
 
 .square .coord.rank {
-    left: 3px;
-    top: 1px;
+    left: 6px;
+    top: 2px;
 }
 
 .player-card {

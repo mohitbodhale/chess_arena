@@ -9,6 +9,8 @@
  * @var float $prizePool
  * @var float $collected
  * @var float $platformRevenue
+ * @var float $projectedRevenue
+ * @var array<int, array{contest: \App\Model\Entity\Tournament, fee: float, collected: float, cut: float, pool: float}> $commissionRows
  * @var int $registrationCount
  * @var array<string, array<int, mixed>> $categoryChart
  * @var array<string, array<int, mixed>> $statusChart
@@ -83,6 +85,77 @@ $this->assign('title', 'Dashboard');
                 </div>
                 <div class="footer">
                     ₹<?= number_format((float)$collected, 0) ?> collected · ₹<?= number_format((float)$prizePool, 0) ?> promised
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Commission per contest</h3>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table mb-0">
+                            <thead>
+                            <tr>
+                                <th>Contest</th>
+                                <th style="width:110px;">Fee</th>
+                                <th style="width:150px;">Collected</th>
+                                <th style="width:160px;">To the winners</th>
+                                <th style="width:150px;">Admin profit</th>
+                                <th style="width:120px;">Status</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <?php if ($commissionRows === []) : ?>
+                                <tr>
+                                    <td colspan="6" class="muted" style="padding:1.6rem;text-align:center;">
+                                        No contest has been created yet.
+                                    </td>
+                                </tr>
+                            <?php endif; ?>
+                            <?php foreach ($commissionRows as $row) : ?>
+                                <?php $contest = $row['contest']; ?>
+                                <tr>
+                                    <td>
+                                        <?= h((string)$contest->get('title')) ?>
+                                        <span class="d-block tiny muted">
+                                            <?= (int)$contest->get('filled_slots') ?> seats × ₹<?= number_format((float)$contest->get('entry_fee'), 2) ?>
+                                        </span>
+                                    </td>
+                                    <td class="mono tiny"><?= number_format($row['fee'], 2) ?>%</td>
+                                    <td class="mono tiny">₹<?= number_format($row['collected'], 2) ?></td>
+                                    <td class="mono tiny" style="color:var(--text);">₹<?= number_format($row['pool'], 2) ?></td>
+                                    <td class="mono tiny" style="color:var(--accent);">₹<?= number_format($row['cut'], 2) ?></td>
+                                    <td>
+                                        <span class="pill <?= $contest->get('status') === 'Completed' ? 'is-done' : 'is-open' ?>">
+                                            <?= h((string)$contest->get('status')) ?>
+                                        </span>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                            </tbody>
+                            <tfoot>
+                            <tr>
+                                <th>Total</th>
+                                <th></th>
+                                <th class="mono tiny">₹<?= number_format((float)$collected, 2) ?></th>
+                                <th class="mono tiny">₹<?= number_format(max(0.0, (float)$collected - (float)$projectedRevenue), 2) ?></th>
+                                <th class="mono tiny" style="color:var(--accent);">₹<?= number_format((float)$projectedRevenue, 2) ?></th>
+                                <th></th>
+                            </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer" style="background:transparent;border-top:1px solid var(--line);">
+                    <span class="tiny muted">
+                        The arena keeps its commission of every collected entry fee, the rest of the
+                        pot is shared by the winners of the contest.
+                    </span>
                 </div>
             </div>
         </div>

@@ -34,12 +34,12 @@ $isOver = ($state['status'] ?? 'Live') !== 'Live';
         <div>
             <div class="surface surface-pad">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <div class="d-flex align-items-center">
+                    <div class="d-flex align-items-center player-card" data-card="b">
                         <span class="avatar mr-2" style="width:34px;height:34px;border-radius:9px;display:grid;place-items:center;background:var(--bg-elev-2);border:1px solid var(--line);font-size:.72rem;">
                             <?= h(strtoupper(substr($blackName, 0, 2))) ?>
                         </span>
                         <div>
-                            <div style="font-weight:600;font-size:.95rem;"><?= h($blackName) ?></div>
+                            <div style="font-weight:600;font-size:.95rem;" data-player="b"><?= h($blackName) ?></div>
                             <div class="tiny muted">Black · rating <?= (int)($match->get('black_player')['rating'] ?? 0) ?></div>
                         </div>
                     </div>
@@ -55,12 +55,12 @@ $isOver = ($state['status'] ?? 'Live') !== 'Live';
                 </div>
 
                 <div class="d-flex justify-content-between align-items-center mt-3">
-                    <div class="d-flex align-items-center">
+                    <div class="d-flex align-items-center player-card" data-card="w">
                         <span class="avatar mr-2" style="width:34px;height:34px;border-radius:9px;display:grid;place-items:center;background:var(--bg-elev-2);border:1px solid var(--line);font-size:.72rem;">
                             <?= h(strtoupper(substr($whiteName, 0, 2))) ?>
                         </span>
                         <div>
-                            <div style="font-weight:600;font-size:.95rem;"><?= h($whiteName) ?></div>
+                            <div style="font-weight:600;font-size:.95rem;" data-player="w"><?= h($whiteName) ?></div>
                             <div class="tiny muted">White · rating <?= (int)($match->get('white_player')['rating'] ?? 0) ?></div>
                         </div>
                     </div>

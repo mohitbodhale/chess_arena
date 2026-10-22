@@ -75,6 +75,17 @@ $percent = (int)$tournament->get('slots_filled_percent');
                     <div class="d-flex flex-wrap align-items-center mt-4" style="gap:.7rem;">
                         <?php if ($isRegistered) : ?>
                             <span class="pill is-open">You are registered</span>
+                            <?php if ($myMatch !== null && $myMatch->get('status') === 'Live') : ?>
+                                <a class="btn-arena"
+                                   href="<?= $this->Url->build(['controller' => 'Matches', 'action' => 'play', $myMatch->get('id')]) ?>">
+                                    <i class="fas fa-circle-play"></i> Play now
+                                </a>
+                            <?php elseif ($myMatch !== null) : ?>
+                                <a class="btn-arena is-ghost"
+                                   href="<?= $this->Url->build(['controller' => 'Matches', 'action' => 'play', $myMatch->get('id')]) ?>">
+                                    Your board
+                                </a>
+                            <?php endif; ?>
                             <?php if ($status === 'Upcoming') : ?>
                                 <?= $this->Form->postLink(
                                     'Leave contest',

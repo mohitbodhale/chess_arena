@@ -103,6 +103,17 @@ return function (RouteBuilder $routes): void {
         );
 
         /*
+         * Static pages such as the arena rules. The route is declared before
+         * the fallbacks so that /pages/rules never looks for a controller
+         * action with that name.
+         */
+        $builder->connect(
+            '/pages/*',
+            ['controller' => 'Pages', 'action' => 'display'],
+            ['_name' => 'static_page'],
+        );
+
+        /*
          * Connect catchall routes for all controllers.
          */
         $builder->fallbacks();

@@ -107,8 +107,48 @@ class TournamentsController extends AppController
             'search' => $search,
             'categories' => $categories,
             'myContestIds' => $myContestIds,
+            'myMatches' => $this->playerMatches(),
             'canJoin' => $this->currentUser()?->hasPermission(Permission::TOURNAMENT_JOIN) ?? false,
         ]);
+    }
+
+    /**
+     * The matches of the signed in player, keyed by the contest they belong to.
+     *
+     * A running game is preferred over a finished one, so a player with both
+     * always gets the board that still needs a move.
+     *
+     * @param array<int, int> $tournamentIds Limit the lookup to these contests.
+     * @return array<int, \App\Model\Entity\ArenaMatch>
+     */
+    protected function playerMatches(array $tournamentIds = []): array
+    {
+        $userId = $this->currentUserId();
+        if ($userId === null) {
+            return [];
+        }
+
+        $matches = $this->getTableLocator()->get('Matches')
+            ->find('forPlayer', ['userId' => $userId]);
+
+        if ($tournamentIds !== []) {
+            $matches->where(['Matches.tournament_id IN' => $tournamentIds]);
+        }
+
+        $matches->orderBy([
+            'CASE' => ['Matches.status' => ['Live' => 0, 'Pending' => 1, 'Completed' => 2]],
+            'Matches.id' => 'ASC',
+        ]);
+
+        $byContest = [];
+        foreach ($matches->all() as $match) {
+            $contestId = (int)$match->get('tournament_id');
+            if (!isset($byContest[$contestId]) || $match->get('status') === 'Live') {
+                $byContest[$contestId] = $match;
+            }
+        }
+
+        return $byContest;
     }
 
     /**
@@ -136,12 +176,15 @@ class TournamentsController extends AppController
             }
         }
 
+        $playerMatches = $this->playerMatches([(int)$tournament->get('id')]);
+
         $this->set([
             'tournament' => $tournament,
             'registrations' => $registrations,
             'standings' => $standings,
             'prizeRows' => $this->payoutService->rows($tournament),
             'isRegistered' => $isRegistered,
+            'myMatch' => $playerMatches[(int)$tournament->get('id')] ?? null,
             'canJoin' => $this->Authorization->can($tournament, 'join'),
             'canManage' => $this->Authorization->can($tournament, 'manage'),
         ]);
@@ -221,7 +264,18 @@ class TournamentsController extends AppController
             ->all()
             ->toList();
 
-        $this->set(compact('contests'));
+        $contestIds = [];
+        foreach ($contests as $registration) {
+            $contest = $registration->get('tournament');
+            if ($contest !== null) {
+                $contestIds[] = (int)$contest->get('id');
+            }
+        }
+
+        $this->set([
+            'contests' => $contests,
+            'myMatches' => $this->playerMatches($contestIds),
+        ]);
     }
 
     /**

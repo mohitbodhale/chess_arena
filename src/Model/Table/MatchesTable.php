@@ -81,6 +81,28 @@ class MatchesTable extends Table
     }
 
     /**
+     * The matches of a single player.
+     *
+     * @param \Cake\ORM\Query\SelectQuery $query The query.
+     * @param array<string, mixed> $options Finder options with a `user_id` key.
+     * @return \Cake\ORM\Query\SelectQuery
+     */
+    public function findForPlayer(SelectQuery $query, array $options = []): SelectQuery
+    {
+        $userId = (int)($options['userId'] ?? 0);
+        if ($userId <= 0) {
+            return $query->where(['1 = 0']);
+        }
+
+        return $query->where([
+            'OR' => [
+                'Matches.white_player_id' => $userId,
+                'Matches.black_player_id' => $userId,
+            ],
+        ]);
+    }
+
+    /**
      * Default validation rules.
      *
      * @param \Cake\Validation\Validator $validator Validator instance.

@@ -332,6 +332,16 @@ class TournamentService
         $tournament->set('prize_pool', $prizePool);
         $tournament->set('platform_revenue', $platformCut);
 
+        // Places that nobody reached are folded into the places that were
+        // reached, so the whole prize pool belongs to the winners.
+        $breakdown = $this->payouts->fitBreakdown(
+            (array)$tournament->get('prize_breakdown'),
+            $standings,
+        );
+        if ($breakdown !== []) {
+            $tournament->set('prize_breakdown', $breakdown);
+        }
+
         $payouts = $this->payouts->distribute($tournament, $standings);
         $users = $this->getTableLocator()->get('Users');
         $platformAccount = $this->platformAccount();
@@ -405,6 +415,82 @@ class TournamentService
             'platform_revenue' => $platformCut,
             'prize_pool' => $prizePool,
         ];
+    }
+
+    /**
+     * Remove a player from a contest and refund the entry fee.
+     *
+     * The administration and the organizer use this when they take a seat away
+     * from a player. The fee is refunded because the player cannot win a prize
+     * in a contest they are no longer part of.
+     *
+     * @param \App\Model\Entity\Tournament $tournament The contest.
+     * @param int $userId The player that is removed.
+     * @param int|null $createdBy The administrator that triggered the removal.
+     * @return array{ok: bool, message: string, registration: \App\Model\Entity\TournamentRegistration|null}
+     */
+    public function removePlayer(Tournament $tournament, int $userId, ?int $createdBy = null): array
+    {
+        if ($tournament->get('status') !== 'Upcoming') {
+            return $this->failed('Entries are locked because the contest already started.');
+        }
+
+        /** @var \App\Model\Table\TournamentRegistrationsTable $registrations */
+        $registrations = $this->getTableLocator()->get('TournamentRegistrations');
+        $registration = $registrations->find()
+            ->where([
+                'tournament_id' => $tournament->get('id'),
+                'user_id' => $userId,
+            ])
+            ->first();
+        if ($registration === null) {
+            return $this->failed('That player is not registered for this contest.');
+        }
+
+        /** @var \App\Model\Table\UsersTable $users */
+        $users = $this->getTableLocator()->get('Users');
+        $user = $users->get($userId);
+
+        /** @var \App\Model\Table\TournamentsTable $tournaments */
+        $tournaments = $this->getTableLocator()->get('Tournaments');
+        $connection = $tournaments->getConnection();
+
+        return $connection->transactional(function () use (
+            $tournament,
+            $user,
+            $registration,
+            $registrations,
+            $tournaments,
+            $users,
+            $createdBy
+        ): array {
+            $fee = round((float)$tournament->get('entry_fee'), 2);
+            if ($fee > 0) {
+                $this->wallet->credit(
+                    $user,
+                    $fee,
+                    'entry_refund',
+                    sprintf('Refund for %s', $tournament->get('title')),
+                    (int)$tournament->get('id'),
+                    $createdBy,
+                    false,
+                );
+                $users->save($user);
+            }
+
+            if (!$registrations->delete($registration)) {
+                return $this->failed('The registration could not be removed.');
+            }
+
+            $tournament->set('filled_slots', max(0, (int)$tournament->get('filled_slots') - 1));
+            $tournaments->save($tournament);
+
+            return [
+                'ok' => true,
+                'message' => 'The player was removed and the entry fee was refunded.',
+                'registration' => null,
+            ];
+        });
     }
 
     /**

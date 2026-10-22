@@ -5,9 +5,13 @@ namespace App\Controller;
 
 use App\Model\Table\MatchesTable;
 use App\Model\Table\TournamentsTable;
+use App\Rbac\Permission;
+use App\Rbac\RoleRegistry;
 use App\Service\Tournament\MatchService;
 use App\Service\Tournament\PayoutService;
 use App\Service\Tournament\TournamentService;
+use Cake\Event\EventInterface;
+use Psr\Http\Message\ResponseInterface;
 
 /**
  * The workspace of an organizer.
@@ -17,6 +21,20 @@ use App\Service\Tournament\TournamentService;
  */
 class OrganizerController extends AppController
 {
+    public function beforeFilter(EventInterface $event): ?ResponseInterface
+    {
+        $user = $this->currentUser();
+        if ($user === null) {
+            return $this->redirect($this->homeRouteFor(null));
+        }
+        $role = $user->getRoleName();
+        if ($role !== RoleRegistry::ADMIN && $role !== RoleRegistry::ORGANIZER) {
+            $this->Flash->error('Access denied.');
+            return $this->redirect($this->homeRouteFor($user));
+        }
+        return null;
+    }
+
     /**
      * @var \App\Model\Table\TournamentsTable
      */
@@ -280,25 +298,17 @@ class OrganizerController extends AppController
         $tournament = $this->Tournaments->get($id);
         $this->Authorization->authorize($tournament, 'manage');
 
-        $registrations = $this->getTableLocator()->get('TournamentRegistrations');
-        $registration = $registrations->find()
-            ->where([
-                'tournament_id' => $tournament->get('id'),
-                'user_id' => $userId,
-            ])
-            ->first();
+        $result = $this->tournamentService->removePlayer(
+            $tournament,
+            (int)$userId,
+            $this->currentUserId(),
+        );
 
-        if ($registration === null) {
-            $this->Flash->error('That player is not registered for this contest.');
-
-            return $this->redirect(['action' => 'slots', $tournament->get('id')]);
+        if ($result['ok']) {
+            $this->Flash->success($result['message']);
+        } else {
+            $this->Flash->error($result['message']);
         }
-
-        $registrations->delete($registration);
-        $tournament->set('filled_slots', max(0, (int)$tournament->get('filled_slots') - 1));
-        $this->Tournaments->save($tournament);
-
-        $this->Flash->success('The player was removed from the contest.');
 
         return $this->redirect(['action' => 'slots', $tournament->get('id')]);
     }

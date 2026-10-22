@@ -6,6 +6,7 @@
  * @var \App\Model\Entity\Tournament $contest
  * @var bool $isRegistered
  * @var bool $canJoin
+ * @var \App\Model\Entity\ArenaMatch|null $myMatch
  */
 
 $category = strtolower((string)$contest->get('category'));
@@ -75,10 +76,17 @@ $rows = $contest->get('prize_rows');
             <?php if ($isRegistered) : ?>
                 <span class="pill is-open mr-2">Joined</span>
             <?php endif; ?>
-            <a class="btn-arena"
-               href="<?= $this->Url->build(['controller' => 'Tournaments', 'action' => 'view', $contest->get('id')]) ?>">
-                <?= $status === 'Live' ? 'Watch' : ($status === 'Completed' ? 'Results' : 'Enter') ?>
-            </a>
+            <?php if ($myMatch !== null && $myMatch->get('status') === 'Live') : ?>
+                <a class="btn-arena"
+                   href="<?= $this->Url->build(['controller' => 'Matches', 'action' => 'play', $myMatch->get('id')]) ?>">
+                    <i class="fas fa-circle-play"></i> Play now
+                </a>
+            <?php else : ?>
+                <a class="btn-arena"
+                   href="<?= $this->Url->build(['controller' => 'Tournaments', 'action' => 'view', $contest->get('id')]) ?>">
+                    <?= $status === 'Live' ? 'Watch' : ($status === 'Completed' ? 'Results' : 'Enter') ?>
+                </a>
+            <?php endif; ?>
         </div>
     </div>
 </article>

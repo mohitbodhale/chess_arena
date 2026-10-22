@@ -18,7 +18,7 @@ class PayoutService
     /**
      * The share of the collected entry fees the platform keeps by default.
      */
-    public const DEFAULT_PLATFORM_FEE = 20.0;
+    public const DEFAULT_PLATFORM_FEE = 10.0;
 
     /**
      * The distribution templates an organizer can pick from.
@@ -200,22 +200,88 @@ class PayoutService
     /**
      * The payout owed to every ranked player.
      *
+     * The whole prize pool is shared by the players that took a place. When the
+     * ladder announces more places than the contest filled, the percentages of
+     * the places that were reached are scaled up so that no money of the pool
+     * is left behind.
+     *
      * @param \App\Model\Entity\Tournament $tournament The contest.
      * @param array<int, \App\Model\Entity\TournamentRegistration> $standings Ranked registrations.
      * @return array<int, float> Registration id to amount.
      */
     public function distribute(Tournament $tournament, array $standings): array
     {
-        $payouts = [];
+        $amounts = [];
         foreach ($this->rows($tournament) as $row) {
             $registration = $standings[$row['rank']] ?? null;
             if ($registration === null) {
                 continue;
             }
-            $payouts[$registration->get('id')] = $row['amount'];
+            $amounts[$registration->get('id')] = $row['amount'];
         }
 
-        return $payouts;
+        $pool = round((float)$tournament->get('prize_pool'), 2);
+        $paid = round(array_sum($amounts), 2);
+        if ($amounts === [] || $paid <= 0.0 || $paid >= $pool) {
+            return $amounts;
+        }
+
+        $ids = array_keys($amounts);
+        $lastId = end($ids);
+        $running = 0.0;
+        $scaled = [];
+        foreach ($amounts as $id => $amount) {
+            if ($id === $lastId) {
+                $scaled[$id] = round($pool - $running, 2);
+
+                continue;
+            }
+            $value = round($pool * ($amount / $paid), 2);
+            $scaled[$id] = $value;
+            $running = round($running + $value, 2);
+        }
+
+        return $scaled;
+    }
+
+    /**
+     * The payout ladder reduced to the places that were actually reached.
+     *
+     * The percentages of the reached places are scaled up to 100% so that the
+     * ladder and the payouts of a settled contest tell the same story.
+     *
+     * @param array<int, array<string, mixed>> $breakdown The announced ladder.
+     * @param array<int, \App\Model\Entity\TournamentRegistration> $standings Ranked registrations.
+     * @return array<int, array{rank: int, label: string, percent: float}>
+     */
+    public function fitBreakdown(array $breakdown, array $standings): array
+    {
+        $reached = [];
+        $total = 0.0;
+        foreach ($breakdown as $row) {
+            $rank = (int)($row['rank'] ?? 0);
+            if (!isset($standings[$rank])) {
+                continue;
+            }
+            $percent = (float)($row['percent'] ?? 0);
+            $reached[] = [
+                'rank' => $rank,
+                'label' => (string)($row['label'] ?? ('Rank ' . $rank)),
+                'percent' => $percent,
+            ];
+            $total += $percent;
+        }
+
+        if ($reached === [] || $total <= 0.0) {
+            return $reached;
+        }
+
+        $scale = 100.0 / $total;
+        foreach ($reached as $index => $row) {
+            $reached[$index]['percent'] = round($row['percent'] * $scale, 4);
+        }
+
+        return $reached;
     }
 
     /**
