@@ -43,7 +43,7 @@ foreach (RoleRegistry::ID_MAP as $roleId => $roleName) {
                 </div>
                 <div class="col-md-4">
                     <button type="submit" class="btn-arena" style="width:100%;">
-                        <i class="fas fa-filter"></i> Filter
+                        <i class="fa fa-filter"></i> Filter
                     </button>
                 </div>
             </form>

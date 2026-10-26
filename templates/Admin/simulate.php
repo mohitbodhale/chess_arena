@@ -18,6 +18,7 @@ $this->assign('title', 'Match simulator');
 
 <div class="container-fluid">
     <div class="row">
+        <?php if ($matches !== []) : ?>
         <div class="col-lg-5">
             <div class="card">
                 <div class="card-header">
@@ -35,13 +36,6 @@ $this->assign('title', 'Match simulator');
                             </tr>
                             </thead>
                             <tbody>
-                            <?php if ($matches === []) : ?>
-                                <tr>
-                                    <td colspan="4" class="muted" style="padding:2rem;text-align:center;">
-                                        No match has been created yet.
-                                    </td>
-                                </tr>
-                            <?php endif; ?>
                             <?php foreach ($matches as $item) : ?>
                                 <tr>
                                     <td class="mono tiny"><?= (int)$item->get('id') ?></td>
@@ -72,12 +66,13 @@ $this->assign('title', 'Match simulator');
                 </div>
             </div>
         </div>
+        <?php endif; ?>
 
-        <div class="col-lg-7">
+        <div class="col-lg-<?= $matches === [] ? 12 : 7 ?>">
             <?php if ($match === null) : ?>
                 <div class="empty-state">
-                    <h3>Pick a match</h3>
-                    <p class="tiny">Choose a match on the left to rehearse its outcome.</p>
+                    <h3><?= $matches === [] ? 'No matches available' : 'Pick a match' ?></h3>
+                    <p class="tiny"><?= $matches === [] ? 'Start a contest to generate matches, then pick one to rehearse its outcome.' : 'Choose a match on the left to rehearse its outcome.' ?></p>
                 </div>
             <?php else : ?>
                 <div class="card">

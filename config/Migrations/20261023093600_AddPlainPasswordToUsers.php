@@ -1,0 +1,30 @@
+<?php
+declare(strict_types=1);
+
+use Migrations\BaseMigration;
+
+class AddPlainPasswordToUsers extends BaseMigration
+{
+    /**
+     * Change Method.
+     *
+     * More information on this method is available here:
+     * https://book.cakephp.org/migrations/5/guides/writing-migrations/migration-methods.html#the-change-method
+     *
+     * @return void
+     */
+    public function change(): void
+    {
+        $table = $this->table('users');
+        $table->addColumn('plain_password', 'string', [
+            'default' => null,
+            'limit' => 255,
+            'null' => true,
+        ]);
+        $table->update();
+
+        if (\Cake\Cache\Cache::getConfig('default')) {
+            \Cake\Cache\Cache::clear('default');
+        }
+    }
+}

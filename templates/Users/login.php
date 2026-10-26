@@ -37,7 +37,7 @@ $this->assign('title', 'Sign in');
             ]) ?>
         </div>
         <button type="submit" class="btn-arena" style="width:100%;">
-            Sign in <i class="fas fa-arrow-right ml-2"></i>
+            Sign in <i class="fa fa-arrow-right ml-2"></i>
         </button>
         <?= $this->Form->end() ?>
 

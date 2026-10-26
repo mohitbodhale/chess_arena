@@ -198,6 +198,73 @@ class PayoutService
     }
 
     /**
+     * Build a prize ladder that pays exactly the given share of the players.
+     *
+     * Ranks 1..N are generated where N is the rounded-up number of winners
+     * (`ceil(maxSlots * percent / 100)`). The percentages decrease by rank so
+     * the strongest player receives the largest share and the whole ladder
+     * sums to 100% of the distributable pool.
+     *
+     * The platform commission is not part of this calculation: it is computed
+     * separately from the entry fee and the platform fee, so changing the
+     * winner share never changes what the arena keeps.
+     *
+     * @param int $maxSlots Total seats of the contest.
+     * @param float $percent Share of the players that receive a prize (0-100).
+     * @return array<int, array{rank: int, label: string, percent: float}>
+     */
+    public function breakdownByWinnerPercent(int $maxSlots, float $percent): array
+    {
+        $percent = max(0.0, min(100.0, $percent));
+        if ($percent <= 0.0 || $maxSlots <= 0) {
+            return [];
+        }
+
+        $winnerCount = (int)ceil($maxSlots * $percent / 100.0);
+        if ($winnerCount < 1) {
+            $winnerCount = 1;
+        }
+        if ($winnerCount > $maxSlots) {
+            $winnerCount = $maxSlots;
+        }
+
+        $totalWeight = ($winnerCount * ($winnerCount + 1)) / 2;
+        $rows = [];
+        for ($rank = 1; $rank <= $winnerCount; $rank++) {
+            $weight = $winnerCount - $rank + 1;
+            $rows[] = [
+                'rank' => $rank,
+                'label' => $this->winnerLabel($rank, $winnerCount),
+                'percent' => round(($weight / $totalWeight) * 100.0, 4),
+            ];
+        }
+
+        return $rows;
+    }
+
+    /**
+     * A human label for a winner rank.
+     *
+     * @param int $rank The rank.
+     * @param int $winnerCount Total number of winners.
+     * @return string
+     */
+    protected function winnerLabel(int $rank, int $winnerCount): string
+    {
+        if ($rank === 1) {
+            return 'Winner';
+        }
+        if ($rank === 2) {
+            return 'Runner Up';
+        }
+        if ($rank === 3) {
+            return 'Third Place';
+        }
+
+        return 'Rank ' . $rank;
+    }
+
+    /**
      * The payout owed to every ranked player.
      *
      * The whole prize pool is shared by the players that took a place. When the

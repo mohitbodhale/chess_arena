@@ -16,7 +16,7 @@ $this->assign('title', 'My contests');
                 <h1 style="font-size:1.5rem;margin:.35rem 0 0;">My contests</h1>
             </div>
             <a class="btn-arena" href="<?= $this->Url->build(['controller' => 'Organizer', 'action' => 'addTournament']) ?>">
-                <i class="fas fa-plus"></i> New contest
+                <i class="fa fa-plus"></i> New contest
             </a>
         </div>
     </div>

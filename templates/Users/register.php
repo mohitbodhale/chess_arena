@@ -58,7 +58,7 @@ $this->assign('title', 'Create account');
             <?php endif; ?>
         </div>
         <button type="submit" class="btn-arena" style="width:100%;">
-            Create account <i class="fas fa-bolt ml-2"></i>
+            Create account <i class="fa fa-bolt ml-2"></i>
         </button>
         <?= $this->Form->end() ?>
 

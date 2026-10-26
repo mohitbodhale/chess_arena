@@ -18,7 +18,7 @@ $this->assign('title', 'Edit contest');
                 <h1 style="font-size:1.5rem;margin:.35rem 0 0;"><?= h((string)$tournament->get('title')) ?></h1>
             </div>
             <a class="btn-arena is-muted" href="<?= $this->Url->build(['controller' => 'Admin', 'action' => 'slots', $tournament->get('id')]) ?>">
-                <i class="fas fa-users"></i> Slot manager
+                <i class="fa fa-users"></i> Slot manager
             </a>
         </div>
     </div>
@@ -59,7 +59,7 @@ $this->assign('title', 'Edit contest');
                     </div>
                     <hr>
                     <a class="btn-arena is-muted" href="<?= $this->Url->build(['controller' => 'Admin', 'action' => 'tournaments']) ?>">
-                        <i class="fas fa-arrow-left"></i> Back to the contests
+                        <i class="fa fa-arrow-left"></i> Back to the contests
                     </a>
                 </div>
             </div>

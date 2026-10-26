@@ -168,4 +168,44 @@ class ArenaMatch extends Entity
 
         return $turn === 'w' ? (int)$this->get('white_player_id') : (int)$this->get('black_player_id');
     }
+
+    /**
+     * How long the match lasted, in seconds.
+     *
+     * @return int|null
+     */
+    public function durationSeconds(): ?int
+    {
+        $started = $this->get('started_at');
+        $ended = $this->get('ended_at');
+
+        if ($started === null || $ended === null) {
+            return null;
+        }
+
+        return (int)$ended->getTimestamp() - (int)$started->getTimestamp();
+    }
+
+    /**
+     * The match duration formatted as `H:i:s` or `i:s`.
+     *
+     * @return string|null
+     */
+    public function duration(): ?string
+    {
+        $seconds = $this->durationSeconds();
+        if ($seconds === null) {
+            return null;
+        }
+
+        $hours = (int)floor($seconds / 3600);
+        $minutes = (int)floor(($seconds % 3600) / 60);
+        $secs = (int)($seconds % 60);
+
+        if ($hours > 0) {
+            return sprintf('%d:%02d:%02d', $hours, $minutes, $secs);
+        }
+
+        return sprintf('%d:%02d', $minutes, $secs);
+    }
 }

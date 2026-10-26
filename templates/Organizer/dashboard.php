@@ -20,7 +20,7 @@ $this->assign('title', 'Organizer dashboard');
                 <h1 style="font-size:1.5rem;margin:.35rem 0 0;">Your workspace</h1>
             </div>
             <a class="btn-arena" href="<?= $this->Url->build(['controller' => 'Organizer', 'action' => 'addTournament']) ?>">
-                <i class="fas fa-plus"></i> New contest
+                <i class="fa fa-plus"></i> New contest
             </a>
         </div>
     </div>
@@ -33,7 +33,7 @@ $this->assign('title', 'Organizer dashboard');
                 <div class="inner">
                     <h3><?= count($contests) ?></h3>
                     <p>Your contests</p>
-                    <span class="icon"><i class="fas fa-sitemap"></i></span>
+                    <span class="icon"><i class="fa fa-sitemap"></i></span>
                 </div>
                 <div class="footer">
                     <a href="<?= $this->Url->build(['controller' => 'Organizer', 'action' => 'tournaments']) ?>">Open the list</a>
@@ -45,7 +45,7 @@ $this->assign('title', 'Organizer dashboard');
                 <div class="inner">
                     <h3><?= (int)$liveCount ?></h3>
                     <p>Live right now</p>
-                    <span class="icon"><i class="fas fa-bolt"></i></span>
+                    <span class="icon"><i class="fa fa-bolt"></i></span>
                 </div>
                 <div class="footer">
                     Seats sold <?= (int)$seats ?>
@@ -57,7 +57,7 @@ $this->assign('title', 'Organizer dashboard');
                 <div class="inner">
                     <h3><?= count($matches) ?></h3>
                     <p>Recent matches</p>
-                    <span class="icon"><i class="fas fa-chess-board"></i></span>
+                    <span class="icon"><i class="fa fa-chess-board"></i></span>
                 </div>
                 <div class="footer">
                     Across every contest
@@ -69,7 +69,7 @@ $this->assign('title', 'Organizer dashboard');
                 <div class="inner">
                     <h3>₹<?= number_format((float)$pool, 0) ?></h3>
                     <p>Prize money</p>
-                    <span class="icon"><i class="fas fa-trophy"></i></span>
+                    <span class="icon"><i class="fa fa-trophy"></i></span>
                 </div>
                 <div class="footer">
                     Your payout responsibility

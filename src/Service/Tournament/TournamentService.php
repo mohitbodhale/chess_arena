@@ -76,7 +76,12 @@ class TournamentService
 
         $breakdown = $data['prize_breakdown'] ?? null;
         if (!is_array($breakdown) || $breakdown === []) {
-            $breakdown = $this->payouts->defaultBreakdown($maxSlots);
+            $winnerPercent = (float)($data['prize_winners_percent'] ?? 0.0);
+            if ($winnerPercent > 0.0) {
+                $breakdown = $this->payouts->breakdownByWinnerPercent($maxSlots, $winnerPercent);
+            } else {
+                $breakdown = $this->payouts->defaultBreakdown($maxSlots);
+            }
         }
 
         $platformFee = $this->platformFee($data);
@@ -200,6 +205,15 @@ class TournamentService
                 return $this->failed('The contest could not be updated.');
             }
 
+            // Recalculate prize pool based on filled seats
+            $updatedPool = $this->payouts->announcedPool(
+                (float)$tournament->get('entry_fee'),
+                (int)$tournament->get('filled_slots'),
+                (float)($tournament->get('platform_fee') ?? PayoutService::DEFAULT_PLATFORM_FEE),
+            );
+            $tournament->set('prize_pool', $updatedPool);
+            $tournaments->save($tournament);
+
             return [
                 'ok' => true,
                 'message' => sprintf('You joined %s.', $tournament->get('title')),
@@ -268,6 +282,15 @@ class TournamentService
             $tournament->set('filled_slots', max(0, (int)$tournament->get('filled_slots') - 1));
             $tournaments->save($tournament);
 
+            // Recalculate prize pool based on filled seats
+            $updatedPool = $this->payouts->announcedPool(
+                (float)$tournament->get('entry_fee'),
+                (int)$tournament->get('filled_slots'),
+                (float)($tournament->get('platform_fee') ?? PayoutService::DEFAULT_PLATFORM_FEE),
+            );
+            $tournament->set('prize_pool', $updatedPool);
+            $tournaments->save($tournament);
+
             return [
                 'ok' => true,
                 'message' => 'Your entry was cancelled and the fee was refunded.',
@@ -304,7 +327,76 @@ class TournamentService
     {
         $registrations = $this->registrations($tournamentId);
 
-        return $this->ranking->rank($registrations);
+        $durations = $this->matchDurations($tournamentId);
+
+        return $this->ranking->rank($registrations, $durations);
+    }
+
+    /**
+     * Match duration in seconds keyed by registration id for a contest.
+     *
+     * @param int $tournamentId The contest.
+     * @return array<int, float>
+     */
+    public function matchDurations(int $tournamentId): array
+    {
+        $durations = [];
+        $matches = $this->getTableLocator()->get('Matches')
+            ->find()
+            ->where(['Matches.tournament_id' => $tournamentId])
+            ->all()
+            ->toList();
+        foreach ($matches as $match) {
+            $duration = $match->durationSeconds();
+            if ($duration === null) {
+                continue;
+            }
+            $whiteId = (int)$match->get('white_player_id');
+            $blackId = (int)$match->get('black_player_id');
+            $whiteReg = $this->registrationForUser($tournamentId, $whiteId);
+            $blackReg = $this->registrationForUser($tournamentId, $blackId);
+            if ($whiteReg !== null) {
+                $durations[(int)$whiteReg->get('id')] = $duration;
+            }
+            if ($blackReg !== null) {
+                $durations[(int)$blackReg->get('id')] = $duration;
+            }
+        }
+
+        return $durations;
+    }
+
+    /**
+     * Find the registration of a user in a contest.
+     *
+     * @param int $tournamentId The contest.
+     * @param int $userId The user.
+     * @return \App\Model\Entity\TournamentRegistration|null
+     */
+    protected function registrationForUser(int $tournamentId, int $userId): ?\App\Model\Entity\TournamentRegistration
+    {
+        return $this->getTableLocator()->get('TournamentRegistrations')
+            ->find()
+            ->where([
+                'tournament_id' => $tournamentId,
+                'user_id' => $userId,
+            ])
+            ->first();
+    }
+
+    /**
+     * Explain why one player is ranked above another (tie-break basis).
+     *
+     * @param \App\Model\Entity\TournamentRegistration $a The higher ranked player.
+     * @param \App\Model\Entity\TournamentRegistration $b The lower ranked player.
+     * @param int $tournamentId The contest (used to look up match durations).
+     * @return string|null
+     */
+    public function rankingTieBreakBasis(TournamentRegistration $a, TournamentRegistration $b, int $tournamentId): ?string
+    {
+        $durations = $this->matchDurations($tournamentId);
+
+        return $this->ranking->tieBreakBasis($a, $b, $durations);
     }
 
     /**
@@ -483,6 +575,15 @@ class TournamentService
             }
 
             $tournament->set('filled_slots', max(0, (int)$tournament->get('filled_slots') - 1));
+            $tournaments->save($tournament);
+
+            // Recalculate prize pool based on filled seats
+            $updatedPool = $this->payouts->announcedPool(
+                (float)$tournament->get('entry_fee'),
+                (int)$tournament->get('filled_slots'),
+                (float)($tournament->get('platform_fee') ?? PayoutService::DEFAULT_PLATFORM_FEE),
+            );
+            $tournament->set('prize_pool', $updatedPool);
             $tournaments->save($tournament);
 
             return [

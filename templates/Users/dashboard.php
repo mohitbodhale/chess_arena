@@ -22,7 +22,7 @@ $this->assign('title', 'My wallet');
             </p>
         </div>
         <a class="btn-arena" href="<?= $this->Url->build('/lobby') ?>">
-            <i class="fas fa-bolt"></i> Find a contest
+            <i class="fa fa-bolt"></i> Find a contest
         </a>
     </div>
 

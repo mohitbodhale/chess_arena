@@ -55,9 +55,55 @@ class LeaderboardController extends AppController
         $standings = $service->standings((int)$tournament->get('id'));
         $ordered = array_values($standings);
 
+        // Match duration in seconds keyed by registration id.
+        $durations = $service->matchDurations((int)$tournament->get('id'));
+
+        // Match duration per player, keyed by user id (for display).
+        $matchDurations = [];
+        $registrationsById = [];
+        foreach ($service->registrations((int)$tournament->get('id')) as $registration) {
+            $registrationsById[(int)$registration->get('id')] = $registration;
+        }
+        foreach ($durations as $regId => $seconds) {
+            $registration = $registrationsById[$regId] ?? null;
+            if ($registration !== null) {
+                $matchDurations[(int)$registration->get('user_id')] = $seconds;
+            }
+        }
+
+        // Opponent name per player for the single match of this contest.
+        $opponents = [];
+        $matches = $this->getTableLocator()->get('Matches')
+            ->find()
+            ->where(['Matches.tournament_id' => $tournament->get('id')])
+            ->contain(['WhitePlayers', 'BlackPlayers'])
+            ->all()
+            ->toList();
+        foreach ($matches as $match) {
+            $whiteId = (int)$match->get('white_player_id');
+            $blackId = (int)$match->get('black_player_id');
+            $whiteName = (string)($match->get('white_player')['username'] ?? '—');
+            $blackName = (string)($match->get('black_player')['username'] ?? '—');
+            $opponents[$whiteId] = $blackName;
+            $opponents[$blackId] = $whiteName;
+        }
+
+        // Explain why each player is ranked above the next one when points tie.
+        $tieBreakBasis = [];
+        $previous = null;
+        foreach ($ordered as $rank => $registration) {
+            if ($previous !== null) {
+                $tieBreakBasis[$rank] = $ranking->tieBreakBasis($previous, $registration, $durations);
+            }
+            $previous = $registration;
+        }
+
         $this->set([
             'tournament' => $tournament,
             'standings' => $ordered,
+            'tieBreakBasis' => $tieBreakBasis,
+            'matchDurations' => $matchDurations,
+            'opponents' => $opponents,
             'ranking' => $ranking,
             'currentUser' => $this->currentUser(),
             'currentRole' => $this->currentUser()?->getRoleName(),

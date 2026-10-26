@@ -29,10 +29,10 @@ $this->assign('title', 'Competitive chess with real prize pools');
             </p>
             <div class="hero-actions">
                 <a class="btn-arena" href="<?= $this->Url->build('/lobby') ?>">
-                    <i class="fas fa-bolt"></i> Enter a tournament
+                    <i class="fa fa-bolt"></i> Enter a tournament
                 </a>
                 <a class="btn-arena is-ghost" href="<?= $this->Url->build('/leaderboard') ?>">
-                    <i class="fas fa-chart-line"></i> Live leaderboard
+                    <i class="fa fa-chart-line"></i> Live leaderboard
                 </a>
             </div>
             <div class="hero-stats">
@@ -133,7 +133,7 @@ $this->assign('title', 'Competitive chess with real prize pools');
 
         <div class="mechanic-grid">
             <article class="mechanic">
-                <div class="icon"><i class="fas fa-indian-rupee-sign"></i></div>
+                <div class="icon"><i class="fa fa-indian-rupee-sign"></i></div>
                 <h4>Entry fee → prize pool</h4>
                 <p>
                     Every seat you buy adds to the pool. The bigger the lobby, the bigger the
@@ -141,7 +141,7 @@ $this->assign('title', 'Competitive chess with real prize pools');
                 </p>
             </article>
             <article class="mechanic">
-                <div class="icon"><i class="fas fa-satellite-dish"></i></div>
+                <div class="icon"><i class="fa fa-satellite-dish"></i></div>
                 <h4>Live leaderboard</h4>
                 <p>
                     Standings update the moment a game ends. Points, time bonus and rating
@@ -149,7 +149,7 @@ $this->assign('title', 'Competitive chess with real prize pools');
                 </p>
             </article>
             <article class="mechanic">
-                <div class="icon"><i class="fas fa-chess-knight"></i></div>
+                <div class="icon"><i class="fa fa-chess-knight"></i></div>
                 <h4>Legal move engine</h4>
                 <p>
                     Every move is validated against a full rules engine, with countdown clocks,
@@ -157,7 +157,7 @@ $this->assign('title', 'Competitive chess with real prize pools');
                 </p>
             </article>
             <article class="mechanic">
-                <div class="icon"><i class="fas fa-stopwatch"></i></div>
+                <div class="icon"><i class="fa fa-stopwatch"></i></div>
                 <h4>Time bonus</h4>
                 <p>
                     Leftover seconds are converted into bonus points. Slow chess still pays —

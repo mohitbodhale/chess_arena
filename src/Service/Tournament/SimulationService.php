@@ -84,7 +84,10 @@ class SimulationService
             $result = 'Draw';
             $termination = $engine->terminationReason() ?? 'draw_agreed';
         } else {
-            $result = 'Draw';
+            // The game did not end naturally, so award a decisive result to one
+            // side (draws are rare in real play). This keeps every simulated
+            // match looking like a real game with a winner.
+            $result = mt_rand(0, 9) < 8 ? (mt_rand(0, 1) === 0 ? 'White_Win' : 'Black_Win') : 'Draw';
             $termination = 'admin_simulation';
         }
 

@@ -26,7 +26,7 @@ $isOver = ($state['status'] ?? 'Live') !== 'Live';
             </h1>
         </div>
         <a class="btn-arena is-muted" href="<?= $this->Url->build('/lobby') ?>">
-            <i class="fas fa-arrow-left"></i> Lobby
+            <i class="fa fa-arrow-left"></i> Lobby
         </a>
     </div>
 
@@ -87,10 +87,10 @@ $isOver = ($state['status'] ?? 'Live') !== 'Live';
                 <?php if ($canPlay) : ?>
                     <div class="d-flex mt-3" style="gap:.6rem;">
                         <button type="button" class="btn-arena is-muted" id="arena-draw" style="flex:1;">
-                            <i class="fas fa-handshake"></i> Draw
+                            <i class="fa fa-handshake"></i> Draw
                         </button>
                         <button type="button" class="btn-arena is-danger" id="arena-resign" style="flex:1;">
-                            <i class="fas fa-flag"></i> Resign
+                            <i class="fa fa-flag"></i> Resign
                         </button>
                     </div>
                 <?php endif; ?>

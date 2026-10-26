@@ -31,7 +31,7 @@ $this->assign('title', 'Dashboard');
             </div>
             <div>
                 <a class="btn-arena" href="<?= $this->Url->build(['controller' => 'Admin', 'action' => 'addTournament']) ?>">
-                    <i class="fas fa-plus"></i> New contest
+                    <i class="fa fa-plus"></i> New contest
                 </a>
             </div>
         </div>
@@ -45,7 +45,7 @@ $this->assign('title', 'Dashboard');
                 <div class="inner">
                     <h3><?= (int)$playerCount ?></h3>
                     <p>Players</p>
-                    <span class="icon"><i class="fas fa-users"></i></span>
+                    <span class="icon"><i class="fa fa-users"></i></span>
                 </div>
                 <div class="footer">
                     <a href="<?= $this->Url->build(['controller' => 'Admin', 'action' => 'users']) ?>">Manage accounts</a>
@@ -57,7 +57,7 @@ $this->assign('title', 'Dashboard');
                 <div class="inner">
                     <h3><?= (int)$contestCount ?></h3>
                     <p>Contests</p>
-                    <span class="icon"><i class="fas fa-sitemap"></i></span>
+                    <span class="icon"><i class="fa fa-sitemap"></i></span>
                 </div>
                 <div class="footer">
                     <a href="<?= $this->Url->build(['controller' => 'Admin', 'action' => 'tournaments']) ?>">Open the list</a>
@@ -69,7 +69,7 @@ $this->assign('title', 'Dashboard');
                 <div class="inner">
                     <h3><?= (int)$liveMatches ?></h3>
                     <p>Live boards</p>
-                    <span class="icon"><i class="fas fa-chess-board"></i></span>
+                    <span class="icon"><i class="fa fa-chess-board"></i></span>
                 </div>
                 <div class="footer">
                     <a href="<?= $this->Url->build(['controller' => 'Admin', 'action' => 'simulate']) ?>">Match simulator</a>
@@ -81,7 +81,7 @@ $this->assign('title', 'Dashboard');
                 <div class="inner">
                     <h3>₹<?= number_format((float)$platformRevenue, 0) ?></h3>
                     <p>Platform revenue</p>
-                    <span class="icon"><i class="fas fa-chart-line"></i></span>
+                    <span class="icon"><i class="fa fa-chart-line"></i></span>
                 </div>
                 <div class="footer">
                     ₹<?= number_format((float)$collected, 0) ?> collected · ₹<?= number_format((float)$prizePool, 0) ?> promised

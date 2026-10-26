@@ -79,7 +79,7 @@ $rows = $contest->get('prize_rows');
             <?php if ($myMatch !== null && $myMatch->get('status') === 'Live') : ?>
                 <a class="btn-arena"
                    href="<?= $this->Url->build(['controller' => 'Matches', 'action' => 'play', $myMatch->get('id')]) ?>">
-                    <i class="fas fa-circle-play"></i> Play now
+                    <i class="fa fa-circle-play"></i> Play now
                 </a>
             <?php else : ?>
                 <a class="btn-arena"

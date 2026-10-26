@@ -36,7 +36,7 @@ $percent = (int)$tournament->get('slots_filled_percent');
                     <?php endif; ?>
                 </span>
                 <a class="btn-arena is-muted" href="<?= $this->Url->build('/lobby') ?>">
-                    <i class="fas fa-arrow-left"></i> Back to lobby
+                    <i class="fa fa-arrow-left"></i> Back to lobby
                 </a>
             </div>
         </div>
@@ -78,7 +78,7 @@ $percent = (int)$tournament->get('slots_filled_percent');
                             <?php if ($myMatch !== null && $myMatch->get('status') === 'Live') : ?>
                                 <a class="btn-arena"
                                    href="<?= $this->Url->build(['controller' => 'Matches', 'action' => 'play', $myMatch->get('id')]) ?>">
-                                    <i class="fas fa-circle-play"></i> Play now
+                                    <i class="fa fa-circle-play"></i> Play now
                                 </a>
                             <?php elseif ($myMatch !== null) : ?>
                                 <a class="btn-arena is-ghost"
@@ -130,24 +130,33 @@ $percent = (int)$tournament->get('slots_filled_percent');
                                 <tr>
                                     <th style="width:56px;">Rank</th>
                                     <th>Player</th>
+                                    <th style="width:70px;">Rating</th>
                                     <th style="width:90px;">W / D / L</th>
                                     <th style="width:90px;">Bonus</th>
                                     <th style="width:90px;">Points</th>
+                                    <th style="width:80px;">Time</th>
+                                    <th style="width:130px;">Tie-break basis</th>
                                     <th style="width:110px;">Prize</th>
                                 </tr>
                                 </thead>
                                 <tbody>
                                 <?php foreach ($standings as $rank => $registration) : ?>
+                                    <?php $regUserId = (int)($registration->get('user_id') ?? 0); ?>
                                     <tr>
                                         <td>
                                             <span class="rank-cell <?= $rank <= 3 ? 'is-' . $rank : '' ?>"><?= $rank ?></span>
                                         </td>
                                         <td><?= h((string)($registration->get('user')['username'] ?? 'Player')) ?></td>
+                                        <td class="mono tiny"><?= (int)($registration->get('user')['rating'] ?? 0) ?></td>
                                         <td class="mono tiny">
                                             <?= (int)$registration->get('wins') ?> / <?= (int)$registration->get('draws') ?> / <?= (int)$registration->get('losses') ?>
                                         </td>
                                         <td class="mono tiny"><?= number_format((float)$registration->get('time_bonus'), 1) ?></td>
                                         <td class="points"><?= number_format((float)$registration->get('score'), 1) ?></td>
+                                        <td class="mono tiny muted"><?= h($matchDurations[$regUserId] ?? '—') ?></td>
+                                        <td class="mono tiny muted">
+                                            <?= h((string)($tieBreakBasis[$rank] ?? '-')) ?>
+                                        </td>
                                         <td class="mono tiny">
                                             <?= (float)$registration->get('prize_won') > 0 ? '₹' . number_format((float)$registration->get('prize_won')) : '—' ?>
                                         </td>
@@ -156,6 +165,11 @@ $percent = (int)$tournament->get('slots_filled_percent');
                                 </tbody>
                             </table>
                         </div>
+                        <p class="tiny muted mt-2">
+                            Tie-break order when points are level:
+                            <strong>points → match time → time bonus → wins → rating → registration order</strong>.
+                            The "Tie-break basis" column shows which criterion separated each player from the one above.
+                        </p>
                     <?php endif; ?>
                 </div>
             </div>

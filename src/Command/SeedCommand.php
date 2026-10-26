@@ -215,6 +215,7 @@ class SeedCommand extends Command
             'username' => $username,
             'email' => $email,
             'password' => self::PASSWORD,
+            'plain_password' => self::PASSWORD,
             'deposit_balance' => '0.00',
             'winnings_balance' => '0.00',
             'rating' => $rating,

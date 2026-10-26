@@ -23,8 +23,9 @@ use Cake\ORM\Entity;
  * @property array<int, array<string, mixed>> $prize_breakdown
  * @property int $base_seconds
  * @property int $increment_seconds
- * @property string|null $rules
- * @property \Cake\I18n\DateTime $start_time
+     * @property string|null $rules
+     * @property float|null $prize_winners_percent
+     * @property \Cake\I18n\DateTime $start_time
  * @property \Cake\I18n\DateTime $created_at
  *
  * @property \App\Model\Entity\User|null $organizer
@@ -58,6 +59,7 @@ class Tournament extends Entity
         'base_seconds' => true,
         'increment_seconds' => true,
         'rules' => true,
+        'prize_winners_percent' => true,
         'start_time' => true,
         'created_at' => true,
         'organizer' => true,

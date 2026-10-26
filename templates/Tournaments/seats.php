@@ -94,7 +94,7 @@ $this->assign('title', 'Seats');
                     <?php endif; ?>
                     <a class="btn-arena is-muted mt-3" style="width:100%;"
                        href="<?= $this->Url->build(['controller' => 'Tournaments', 'action' => 'view', $tournament->get('id')]) ?>">
-                        <i class="fas fa-arrow-left"></i> Back to the contest
+                        <i class="fa fa-arrow-left"></i> Back to the contest
                     </a>
                 </div>
             </div>

@@ -23,7 +23,7 @@ $statusOptions = ['' => 'Every status', 'Upcoming' => 'Upcoming', 'Live' => 'Liv
                 <h1 style="font-size:1.5rem;margin:.35rem 0 0;">All contests</h1>
             </div>
             <a class="btn-arena" href="<?= $this->Url->build(['controller' => 'Admin', 'action' => 'addTournament']) ?>">
-                <i class="fas fa-plus"></i> New contest
+                <i class="fa fa-plus"></i> New contest
             </a>
         </div>
     </div>
@@ -60,7 +60,7 @@ $statusOptions = ['' => 'Every status', 'Upcoming' => 'Upcoming', 'Live' => 'Liv
                 </div>
                 <div class="col-md-4">
                     <button type="submit" class="btn-arena" style="width:100%;">
-                        <i class="fas fa-filter"></i> Filter
+                        <i class="fa fa-filter"></i> Filter
                     </button>
                 </div>
             </form>

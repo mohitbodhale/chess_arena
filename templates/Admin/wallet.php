@@ -84,7 +84,7 @@ foreach ($players as $player) {
                             </select>
                         </div>
                         <button type="submit" class="btn-arena" style="width:100%;">
-                            <i class="fas fa-filter"></i> Apply
+                            <i class="fa fa-filter"></i> Apply
                         </button>
                     </form>
                 </div>

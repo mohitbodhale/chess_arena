@@ -157,7 +157,7 @@ $status = (string)$tournament->get('status');
                                 <td class="text-right">
                                     <?php if ($status === 'Upcoming') : ?>
                                         <?= $this->Form->postLink(
-                                            '<i class="fas fa-user-minus"></i>',
+                                            '<i class="fa fa-user-minus"></i>',
                                             $manageBase . '/remove-player/'
                                                 . $tournament->get('id') . '/' . $registration->get('user_id'),
                                             [

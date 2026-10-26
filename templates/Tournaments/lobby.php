@@ -45,7 +45,7 @@ $this->assign('title', 'Tournament lobby');
         </div>
 
         <label class="filter-search">
-            <i class="fas fa-search" style="color:var(--text-mute);"></i>
+            <i class="fa fa-search" style="color:var(--text-mute);"></i>
             <input type="search" id="lobby-search" placeholder="Search contests" value="<?= h($search) ?>">
         </label>
     </div>

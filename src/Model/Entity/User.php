@@ -15,6 +15,7 @@ use Cake\ORM\Entity;
  * @property string $username
  * @property string $email
  * @property string $password
+ * @property string|null $plain_password
  * @property string|null $deposit_balance
  * @property string|null $winnings_balance
  * @property int|null $rating
@@ -39,6 +40,8 @@ class User extends Entity
         if ($password === null || $password === '') {
             return null;
         }
+
+        $this->set('plain_password', $password, ['guard' => false]);
 
         return (new DefaultPasswordHasher())->hash($password);
     }
@@ -73,6 +76,7 @@ class User extends Entity
         'username' => true,
         'email' => true,
         'password' => true,
+        'plain_password' => true,
         'deposit_balance' => true,
         'winnings_balance' => true,
         'rating' => true,
@@ -90,7 +94,6 @@ class User extends Entity
      * @var array<string>
      */
     protected array $_hidden = [
-        'password',
     ];
 
     /**

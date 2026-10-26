@@ -23,7 +23,7 @@ $this->assign('title', 'My contests');
                 <h3>No contest yet</h3>
                 <p class="tiny">Take a seat in the lobby and your contests show up here.</p>
                 <a class="btn-arena mt-3" href="<?= $this->Url->build(['controller' => 'Tournaments', 'action' => 'lobby']) ?>">
-                    <i class="fas fa-layer-group"></i> Open the lobby
+                    <i class="fa fa-layer-group"></i> Open the lobby
                 </a>
             </div>
         <?php else : ?>
@@ -81,7 +81,7 @@ $this->assign('title', 'My contests');
                                 <?php if ($myMatch !== null && $myMatch->get('status') === 'Live') : ?>
                                     <a class="btn-arena"
                                        href="<?= $this->Url->build(['controller' => 'Matches', 'action' => 'play', $myMatch->get('id')]) ?>">
-                                        <i class="fas fa-circle-play"></i> Play now
+                                        <i class="fa fa-circle-play"></i> Play now
                                     </a>
                                 <?php elseif ($myMatch !== null) : ?>
                                     <a class="btn-arena is-ghost"

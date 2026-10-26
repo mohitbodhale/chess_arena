@@ -52,15 +52,17 @@ class TournamentsController extends AppController
     public function lobby(): void
     {
         $category = (string)($this->request->getQuery('category') ?? 'All');
-        $status = (string)($this->request->getQuery('status') ?? 'Open');
+        $status = (string)($this->request->getQuery('status') ?? 'All');
         $search = trim((string)($this->request->getQuery('q') ?? ''));
 
-        $query = $this->Tournaments->find('open')->contain(['Organizer']);
+        $query = $this->Tournaments->find()->contain(['Organizer']);
 
         if ($category !== 'All' && $category !== '') {
             $query->where(['Tournaments.category' => $category]);
         }
-        if ($status === 'Live') {
+        if ($status === 'Open') {
+            $query->where(['Tournaments.status IN' => ['Upcoming', 'Live']]);
+        } elseif ($status === 'Live') {
             $query->where(['Tournaments.status' => 'Live']);
         } elseif ($status === 'Completed') {
             $query->where(['Tournaments.status' => 'Completed']);
@@ -136,8 +138,8 @@ class TournamentsController extends AppController
         }
 
         $matches->orderBy([
-            'CASE' => ['Matches.status' => ['Live' => 0, 'Pending' => 1, 'Completed' => 2]],
-            'Matches.id' => 'ASC',
+            new \Cake\Database\Expression\QueryExpression('CASE Matches.status WHEN "Live" THEN 0 WHEN "Pending" THEN 1 ELSE 2 END'),
+            'Matches.id',
         ]);
 
         $byContest = [];
@@ -178,10 +180,38 @@ class TournamentsController extends AppController
 
         $playerMatches = $this->playerMatches([(int)$tournament->get('id')]);
 
+        // Match duration in seconds keyed by registration id.
+        $durations = $this->tournamentService->matchDurations((int)$tournament->get('id'));
+
+        // Match duration per player, keyed by user id (for display).
+        $matchDurations = [];
+        $registrationsById = [];
+        foreach ($registrations as $registration) {
+            $registrationsById[(int)$registration->get('id')] = $registration;
+        }
+        foreach ($durations as $regId => $seconds) {
+            $registration = $registrationsById[$regId] ?? null;
+            if ($registration !== null) {
+                $matchDurations[(int)$registration->get('user_id')] = $seconds;
+            }
+        }
+
+        // Explain why each player is ranked above the next one when points tie.
+        $tieBreakBasis = [];
+        $previous = null;
+        foreach ($standings as $rank => $registration) {
+            if ($previous !== null) {
+                $tieBreakBasis[$rank] = $this->tournamentService->rankingTieBreakBasis($previous, $registration, (int)$tournament->get('id'));
+            }
+            $previous = $registration;
+        }
+
         $this->set([
             'tournament' => $tournament,
             'registrations' => $registrations,
             'standings' => $standings,
+            'tieBreakBasis' => $tieBreakBasis,
+            'matchDurations' => $matchDurations,
             'prizeRows' => $this->payoutService->rows($tournament),
             'isRegistered' => $isRegistered,
             'myMatch' => $playerMatches[(int)$tournament->get('id')] ?? null,

@@ -137,12 +137,26 @@ class RankingService
      * @param array<int, \App\Model\Entity\TournamentRegistration> $registrations The registrations.
      * @return array<int, \App\Model\Entity\TournamentRegistration> Ranked registrations keyed by rank.
      */
-    public function rank(array $registrations): array
+    public function rank(array $registrations, array $durations = []): array
     {
-        usort($registrations, function (TournamentRegistration $a, TournamentRegistration $b): int {
+        usort($registrations, function (TournamentRegistration $a, TournamentRegistration $b) use ($durations): int {
             $byPoints = $b->points() <=> $a->points();
             if ($byPoints !== 0) {
                 return $byPoints;
+            }
+
+            // Faster completion ranks higher.
+            $timeA = $durations[(int)$a->get('id')] ?? null;
+            $timeB = $durations[(int)$b->get('id')] ?? null;
+            if ($timeA !== null && $timeB !== null) {
+                $byTime = $timeA <=> $timeB;
+                if ($byTime !== 0) {
+                    return $byTime;
+                }
+            } elseif ($timeA !== null) {
+                return -1;
+            } elseif ($timeB !== null) {
+                return 1;
             }
 
             $byBonus = $b->bonus() <=> $a->bonus();
@@ -174,6 +188,75 @@ class RankingService
         }
 
         return $ranked;
+    }
+
+    /**
+     * Format a duration in seconds as `H:i:s` or `i:s`.
+     *
+     * @param float $seconds Seconds.
+     * @return string
+     */
+    protected function formatDuration(float $seconds): string
+    {
+        $total = (int)round($seconds);
+        $hours = (int)floor($total / 3600);
+        $minutes = (int)floor(($total % 3600) / 60);
+        $secs = (int)($total % 60);
+
+        if ($hours > 0) {
+            return sprintf('%d:%02d:%02d', $hours, $minutes, $secs);
+        }
+
+        return sprintf('%d:%02d', $minutes, $secs);
+    }
+
+    /**
+     * Explain why player A is ranked above player B.
+     *
+     * Returns a short human readable phrase with the actual values, like
+     * "Time 3:12 vs 4:05" or "Rating 1900 vs 1800", so an administrator
+     * can see exactly what separated two tied players. Returns null when the
+     * order is decided by points (not a tie). Returns 'Registration order'
+     * when every sporting criterion is identical.
+     *
+     * @param \App\Model\Entity\TournamentRegistration $a The higher ranked player.
+     * @param \App\Model\Entity\TournamentRegistration $b The lower ranked player.
+     * @param array<int, float> $durations Match duration in seconds keyed by registration id.
+     * @return string|null
+     */
+    public function tieBreakBasis(TournamentRegistration $a, TournamentRegistration $b, array $durations = []): ?string
+    {
+        $pointsA = $a->points();
+        $pointsB = $b->points();
+        if ($pointsA !== $pointsB) {
+            return null;
+        }
+
+        $timeA = $durations[(int)$a->get('id')] ?? null;
+        $timeB = $durations[(int)$b->get('id')] ?? null;
+        if ($timeA !== null && $timeB !== null && $timeA !== $timeB) {
+            return sprintf('Time %s vs %s', $this->formatDuration($timeA), $this->formatDuration($timeB));
+        }
+
+        $bonusA = $a->bonus();
+        $bonusB = $b->bonus();
+        if ($bonusA !== $bonusB) {
+            return sprintf('Time bonus %s vs %s', number_format($bonusA, 1), number_format($bonusB, 1));
+        }
+
+        $winsA = (int)$a->get('wins');
+        $winsB = (int)$b->get('wins');
+        if ($winsA !== $winsB) {
+            return sprintf('Wins %d vs %d', $winsA, $winsB);
+        }
+
+        $ratingA = (int)($a->get('user')['rating'] ?? 0);
+        $ratingB = (int)($b->get('user')['rating'] ?? 0);
+        if ($ratingA !== $ratingB) {
+            return sprintf('Rating %d vs %d', $ratingA, $ratingB);
+        }
+
+        return 'Registration order';
     }
 
     /**

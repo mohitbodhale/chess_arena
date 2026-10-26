@@ -35,17 +35,17 @@ $title = $this->fetch('title') ?: 'Chess Arena';
         <ul class="navbar-nav">
             <li class="nav-item">
                 <a class="nav-link" data-widget="pushmenu" href="#" role="button" aria-label="Toggle navigation">
-                    <i class="fas fa-bars"></i>
+                    <i class="fa fa-bars"></i>
                 </a>
             </li>
             <li class="nav-item d-none d-sm-inline-block">
                 <a class="nav-link" href="<?= $this->Url->build('/lobby') ?>">
-                    <i class="fas fa-chess-board mr-2"></i>Lobby
+                    <i class="fa fa-chess-board mr-2"></i>Lobby
                 </a>
             </li>
             <li class="nav-item d-none d-sm-inline-block">
                 <a class="nav-link" href="<?= $this->Url->build('/leaderboard') ?>">
-                    <i class="fas fa-chart-line mr-2"></i>Leaderboard
+                    <i class="fa fa-chart-line mr-2"></i>Leaderboard
                 </a>
             </li>
         </ul>
@@ -60,12 +60,12 @@ $title = $this->fetch('title') ?: 'Chess Arena';
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="<?= $this->Url->build('/users/dashboard') ?>">
-                        <i class="fas fa-wallet mr-2"></i>Wallet
+                        <i class="fa fa-wallet mr-2"></i>Wallet
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="<?= $this->Url->build('/users/logout') ?>">
-                        <i class="fas fa-sign-out-alt mr-2"></i>Sign out
+                        <i class="fa fa-sign-out-alt mr-2"></i>Sign out
                     </a>
                 </li>
             <?php else : ?>
@@ -91,19 +91,19 @@ $title = $this->fetch('title') ?: 'Chess Arena';
                     <li class="nav-header">Play</li>
                     <li class="nav-item">
                         <a href="<?= $this->Url->build('/lobby') ?>" class="nav-link">
-                            <i class="nav-icon fas fa-layer-group"></i>
+                            <i class="nav-icon fa fa-layer-group"></i>
                             <p>Tournament lobby</p>
                         </a>
                     </li>
                     <li class="nav-item">
                         <a href="<?= $this->Url->build('/tournaments/mine') ?>" class="nav-link">
-                            <i class="nav-icon fas fa-gamepad"></i>
+                            <i class="nav-icon fa fa-gamepad"></i>
                             <p>My contests</p>
                         </a>
                     </li>
                     <li class="nav-item">
                         <a href="<?= $this->Url->build('/leaderboard') ?>" class="nav-link">
-                            <i class="nav-icon fas fa-trophy"></i>
+                            <i class="nav-icon fa fa-trophy"></i>
                             <p>Leaderboard</p>
                         </a>
                     </li>
@@ -112,31 +112,31 @@ $title = $this->fetch('title') ?: 'Chess Arena';
                         <li class="nav-header">Admin</li>
                         <li class="nav-item">
                             <a href="<?= $this->Url->build('/admin') ?>" class="nav-link">
-                                <i class="nav-icon fas fa-gauge-high"></i>
+                                <i class="nav-icon fa fa-gauge-high"></i>
                                 <p>Dashboard</p>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a href="<?= $this->Url->build('/admin/tournaments') ?>" class="nav-link">
-                                <i class="nav-icon fas fa-sitemap"></i>
+                                <i class="nav-icon fa fa-sitemap"></i>
                                 <p>Contests</p>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a href="<?= $this->Url->build('/admin/wallet') ?>" class="nav-link">
-                                <i class="nav-icon fas fa-file-invoice-dollar"></i>
+                                <i class="nav-icon fa fa-file-invoice-dollar"></i>
                                 <p>Wallet auditor</p>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a href="<?= $this->Url->build('/admin/simulate') ?>" class="nav-link">
-                                <i class="nav-icon fas fa-flask"></i>
+                                <i class="nav-icon fa fa-flask"></i>
                                 <p>Match simulator</p>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a href="<?= $this->Url->build('/admin/users') ?>" class="nav-link">
-                                <i class="nav-icon fas fa-users"></i>
+                                <i class="nav-icon fa fa-users"></i>
                                 <p>Players</p>
                             </a>
                         </li>
@@ -144,19 +144,19 @@ $title = $this->fetch('title') ?: 'Chess Arena';
                         <li class="nav-header">Organizer</li>
                         <li class="nav-item">
                             <a href="<?= $this->Url->build('/organizer') ?>" class="nav-link">
-                                <i class="nav-icon fas fa-gauge-high"></i>
+                                <i class="nav-icon fa fa-gauge-high"></i>
                                 <p>Dashboard</p>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a href="<?= $this->Url->build('/organizer/tournaments') ?>" class="nav-link">
-                                <i class="nav-icon fas fa-sitemap"></i>
+                                <i class="nav-icon fa fa-sitemap"></i>
                                 <p>My contests</p>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a href="<?= $this->Url->build('/organizer/add-tournament') ?>" class="nav-link">
-                                <i class="nav-icon fas fa-plus-circle"></i>
+                                <i class="nav-icon fa fa-plus-circle"></i>
                                 <p>Create contest</p>
                             </a>
                         </li>

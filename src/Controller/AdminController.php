@@ -275,7 +275,13 @@ class AdminController extends AppController
 
         if ($this->request->is('post')) {
             $data = $this->request->getData();
-            if (!empty($data['prize_template'])) {
+            $winnerPercent = (float)($data['prize_winners_percent'] ?? 0.0);
+            if ($winnerPercent > 0.0) {
+                $data['prize_breakdown'] = $this->payoutService->breakdownByWinnerPercent(
+                    (int)($data['max_slots'] ?? $tournament->get('max_slots')),
+                    $winnerPercent,
+                );
+            } elseif (!empty($data['prize_template'])) {
                 $data['prize_breakdown'] = $this->payoutService->templateRows((string)$data['prize_template']);
             }
             $tournament = $this->Tournaments->patchEntity($tournament, $data);
@@ -574,6 +580,7 @@ class AdminController extends AppController
         }
 
         $user->set('password', $newPassword);
+        $user->set('plain_password', $newPassword);
         if ($users->save($user)) {
             $this->Flash->success(sprintf('Password changed for %s.', $user->get('username')));
         } else {

@@ -97,23 +97,20 @@ class UsersController extends AppController
     {
         $this->request->allowMethod(['get', 'post']);
 
-        $result = $this->Authentication->getResult();
-        if ($result !== null && $result->isValid()) {
-            $user = $this->currentUser();
-
+        if ($this->request->is('post')) {
+            $email = (string)$this->request->getData('email');
+            $password = (string)$this->request->getData('password');
+            $users = $this->getTableLocator()->get('Users');
+            $user = $users->find('forAuth')->where(['email' => $email])->first();
             if ($user !== null) {
-                // Persist the identity so the session keeps the player signed in.
-                $this->Authentication->setIdentity($user);
-
-                $users = $this->getTableLocator()->get('Users');
-                $user->set('last_login_at', date('Y-m-d H:i:s'));
-                $users->save($user);
+                $hasher = new \Authentication\PasswordHasher\DefaultPasswordHasher();
+                if ($hasher->check($password, (string)$user->password)) {
+                    $this->Authentication->setIdentity($user);
+                    $user->set('last_login_at', date('Y-m-d H:i:s'));
+                    $users->save($user);
+                    return $this->redirect($this->homeRouteFor($user));
+                }
             }
-
-            return $this->redirect($this->homeRouteFor($user));
-        }
-
-        if ($this->request->is('post') && $result !== null && !$result->isValid()) {
             $this->Flash->error(__('Invalid email or password.'));
         }
 
@@ -137,8 +134,11 @@ class UsersController extends AppController
             $data['deposit_balance'] = '0.00';
             $data['winnings_balance'] = '0.00';
             $data['status'] = 'Active';
+            $data['plain_password'] = $data['password'] ?? '';
 
             $user = $users->patchEntity($user, $data);
+
+            $user->set('plain_password', (string)($data['password'] ?? ''));
 
             if ($users->save($user)) {
                 $wallet = new WalletService();

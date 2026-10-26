@@ -19,7 +19,7 @@ $this->assign('title', 'Slots');
                 <h1 style="font-size:1.5rem;margin:.35rem 0 0;"><?= h((string)$tournament->get('title')) ?></h1>
             </div>
             <a class="btn-arena is-muted" href="<?= $this->Url->build(['controller' => 'Admin', 'action' => 'editTournament', $tournament->get('id')]) ?>">
-                <i class="fas fa-sliders-h"></i> Configuration
+                <i class="fa fa-sliders-h"></i> Configuration
             </a>
         </div>
     </div>

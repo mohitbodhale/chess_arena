@@ -138,26 +138,41 @@ if ($startValue instanceof \Cake\I18n\DateTime) {
                 </div>
             <?php endif; ?>
             <?php if (!empty($showPlatformFee)) : ?>
-                <div class="col-md-4">
-                    <div class="field">
-                        <?= $this->Form->label('platform_fee', 'Platform fee (%)') ?>
-                        <?= $this->Form->text('platform_fee', [
-                            'class' => 'form-control',
-                            'value' => $tournament->get('platform_fee') ?? '10.00',
-                            'required' => true,
-                        ]) ?>
-                        <div class="help">
-                            The share of the collected entry fees the arena keeps. The rest is
-                            the prize pool for the winners.
-                        </div>
+            <div class="col-md-4">
+                <div class="field">
+                    <?= $this->Form->label('platform_fee', 'Platform fee (%)') ?>
+                    <?= $this->Form->text('platform_fee', [
+                        'class' => 'form-control',
+                        'value' => $tournament->get('platform_fee') ?? '10.00',
+                        'required' => true,
+                    ]) ?>
+                    <div class="help">
+                        The share of the collected entry fees the arena keeps. The rest is
+                        the prize pool for the winners.
                     </div>
                 </div>
+            </div>
+            <div class="col-md-4">
+                <div class="field">
+                    <?= $this->Form->label('prize_winners_percent', 'Prize winners (% of players)') ?>
+                    <?= $this->Form->text('prize_winners_percent', [
+                        'class' => 'form-control',
+                        'value' => $tournament->get('prize_winners_percent') ?? '',
+                        'placeholder' => 'Leave empty to use the payout ladder above',
+                    ]) ?>
+                    <div class="help">
+                        Share of the filled seats that receive a prize (for example 40 pays
+                        the top 40% of the players). The arena keeps its platform fee no
+                        matter how the pool is split.
+                    </div>
+                </div>
+            </div>
             <?php endif; ?>
             <div class="col-md-3">
                 <div class="field">
                     <label>&nbsp;</label>
                     <button type="submit" class="btn-arena" style="width:100%;">
-                        <i class="fas fa-check"></i> Save contest
+                        <i class="fa fa-check"></i> Save contest
                     </button>
                 </div>
             </div>

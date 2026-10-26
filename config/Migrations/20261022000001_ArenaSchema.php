@@ -200,12 +200,13 @@ class ArenaSchema extends BaseMigration
      */
     protected function tableExists(string $table): bool
     {
-        $row = $this->countRows(
-            'SELECT COUNT(*) AS `c` FROM information_schema.TABLES '
-            . 'WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = \'' . $table . '\'',
-        );
-
-        return (int)($row['c'] ?? 0) > 0;
+        try {
+            $row = $this->countRows("SELECT COUNT(*) AS c FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '" . $table . "'");
+            return (int)($row['c'] ?? 0) > 0;
+        } catch (\Throwable $e) {
+            $row = $this->countRows("SELECT COUNT(*) AS c FROM sqlite_master WHERE type='table' AND name = '" . $table . "'");
+            return (int)($row['c'] ?? 0) > 0;
+        }
     }
 
     /**
@@ -217,13 +218,18 @@ class ArenaSchema extends BaseMigration
      */
     protected function columnExists(string $table, string $column): bool
     {
-        $row = $this->countRows(
-            'SELECT COUNT(*) AS `c` FROM information_schema.COLUMNS '
-            . 'WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = \'' . $table . '\' '
-            . 'AND COLUMN_NAME = \'' . $column . '\'',
-        );
-
-        return (int)($row['c'] ?? 0) > 0;
+        try {
+            $row = $this->countRows("SELECT COUNT(*) AS c FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '" . $table . "' AND COLUMN_NAME = '" . $column . "'");
+            return (int)($row['c'] ?? 0) > 0;
+        } catch (\Throwable $e) {
+            $cols = $this->getAdapter()->fetchAll("PRAGMA table_info(" . $table . ")");
+            foreach ($cols as $c) {
+                if (($c['name'] ?? '') === $column) {
+                    return true;
+                }
+            }
+            return false;
+        }
     }
 
     /**
@@ -235,13 +241,18 @@ class ArenaSchema extends BaseMigration
      */
     protected function indexExists(string $table, string $index): bool
     {
-        $row = $this->countRows(
-            'SELECT COUNT(*) AS `c` FROM information_schema.STATISTICS '
-            . 'WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = \'' . $table . '\' '
-            . 'AND INDEX_NAME = \'' . $index . '\'',
-        );
-
-        return (int)($row['c'] ?? 0) > 0;
+        try {
+            $row = $this->countRows("SELECT COUNT(*) AS c FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '" . $table . "' AND INDEX_NAME = '" . $index . "'");
+            return (int)($row['c'] ?? 0) > 0;
+        } catch (\Throwable $e) {
+            $cols = $this->getAdapter()->fetchAll("PRAGMA index_list(" . $table . ")");
+            foreach ($cols as $c) {
+                if (($c['name'] ?? '') === $index) {
+                    return true;
+                }
+            }
+            return false;
+        }
     }
 
     /**

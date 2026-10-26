@@ -864,6 +864,10 @@ body.admin-body {
     background: var(--bg-elev-2);
     border: 1px solid var(--line);
     color: var(--text);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    height: 2.75rem;
+    padding: 0.5rem 0.75rem;
 }
 
 .admin-shell .form-control:focus {
