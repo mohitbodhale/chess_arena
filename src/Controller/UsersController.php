@@ -203,4 +203,137 @@ class UsersController extends AppController
             'totalBalance' => $user?->getTotalBalance() ?? 0.0,
         ]);
     }
+
+    /**
+     * Show the deposit request form.
+     *
+     * @return void
+     */
+    public function deposit(): void
+    {
+        $user = $this->currentUser();
+        $pending = $this->getTableLocator()->get('DepositRequests')
+            ->find()
+            ->where([
+                'DepositRequests.user_id' => $this->currentUserId(),
+                'DepositRequests.status' => 'pending',
+            ])
+            ->order(['DepositRequests.id' => 'DESC'])
+            ->first();
+
+        $this->set(compact('user', 'pending'));
+    }
+
+    /**
+     * Create a deposit request and show the payment QR code.
+     *
+     * @return \Cake\Http\Response|null
+     */
+    public function requestDeposit()
+    {
+        $this->request->allowMethod(['post']);
+
+        $user = $this->currentUser();
+        $data = $this->request->getData();
+        $amount = (float)($data['amount'] ?? 0);
+        $upiId = (string)($data['upi_id'] ?? '');
+
+        if ($amount <= 0) {
+            $this->Flash->error('Enter a valid amount.');
+
+            return $this->redirect(['action' => 'deposit']);
+        }
+
+        $reference = 'CA-' . strtoupper(uniqid());
+
+        $request = $this->getTableLocator()->get('DepositRequests')->newEntity([
+            'user_id' => (int)$this->currentUserId(),
+            'amount' => $amount,
+            'upi_id' => $upiId !== '' ? $upiId : null,
+            'reference' => $reference,
+            'status' => 'pending',
+            'created_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        if (!$this->getTableLocator()->get('DepositRequests')->save($request)) {
+            $this->Flash->error('The deposit request could not be created.');
+
+            return $this->redirect(['action' => 'deposit']);
+        }
+
+        $this->Flash->success('Deposit request created. Pay using the QR code below and wait for admin approval.');
+
+        return $this->redirect(['action' => 'depositQr', $request->get('id')]);
+    }
+
+    /**
+     * Show the QR code for a deposit request.
+     *
+     * @param string|null $id The deposit request id.
+     * @return \Cake\Http\Response|null
+     */
+    public function depositQr(?string $id = null)
+    {
+        $request = $this->getTableLocator()->get('DepositRequests')
+            ->find()
+            ->where([
+                'DepositRequests.id' => $id,
+                'DepositRequests.user_id' => $this->currentUserId(),
+            ])
+            ->first();
+
+        if ($request === null) {
+            $this->Flash->error('Deposit request not found.');
+
+            return $this->redirect(['action' => 'deposit']);
+        }
+
+        $this->set(compact('request'));
+    }
+
+    /**
+     * Serve the QR code image for a deposit request.
+     *
+     * @param string|null $id The deposit request id.
+     * @return \Cake\Http\Response|null
+     */
+    public function depositQrImage(?string $id = null)
+    {
+        $request = $this->getTableLocator()->get('DepositRequests')
+            ->find()
+            ->where([
+                'DepositRequests.id' => $id,
+                'DepositRequests.user_id' => $this->currentUserId(),
+            ])
+            ->first();
+
+        if ($request === null) {
+            throw new \Cake\Network\Exception\NotFoundException(__('Deposit request not found.'));
+        }
+
+        $upiId = (string)($request->get('upi_id') ?? 'arena@upi');
+        $amount = (float)$request->get('amount');
+        $reference = (string)$request->get('reference');
+
+        $upiUrl = sprintf(
+            'upi://pay?pa=%s&pn=Chess%20Arena&am=%.2f&cu=INR&tn=%s',
+            urlencode($upiId),
+            $amount,
+            urlencode($reference)
+        );
+
+        $qrUrl = sprintf(
+            'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=%s',
+            urlencode($upiUrl)
+        );
+
+        $response = $this->response->withType('png');
+        $fileContents = file_get_contents($qrUrl);
+
+        if ($fileContents === false) {
+            throw new \Cake\Network\Exception\NotFoundException(__('Could not generate QR code.'));
+        }
+
+        return $response->withStringBody($fileContents);
+    }
 }

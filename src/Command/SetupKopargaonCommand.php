@@ -19,7 +19,7 @@ use Cake\ORM\Locator\LocatorAwareTrait;
  * Create, fill, play and settle a kopargaon contest end-to-end.
  *
  * Usage:
- *   bin/cake.php setup_kopargaon --title="kopargaon chess master s2" --prize-percent=40
+ *   bin/cake.php setup_kopargaon --title="kopargaon chess master s2" --prize-count=5
  */
 class SetupKopargaonCommand extends Command
 {
@@ -36,9 +36,9 @@ class SetupKopargaonCommand extends Command
                 'help' => 'Tournament title.',
                 'default' => 'kopargaon chess master s1',
             ])
-            ->addOption('prize-percent', [
+            ->addOption('prize-count', [
                 'short' => 'p',
-                'help' => 'Share of the players that receive a prize (0-100). Empty = payout ladder template.',
+                'help' => 'Number of players that receive a prize. Empty = payout ladder template.',
                 'default' => null,
             ]);
 
@@ -48,10 +48,10 @@ class SetupKopargaonCommand extends Command
     public function execute(Arguments $args, ConsoleIo $io): int
     {
         $title = (string)($args->getOption('title') ?? 'kopargaon chess master s1');
-        $prizePercentRaw = $args->getOption('prize-percent');
-        $prizePercent = $prizePercentRaw === null || $prizePercentRaw === ''
+        $prizeCountRaw = $args->getOption('prize-count');
+        $prizeCount = $prizeCountRaw === null || $prizeCountRaw === ''
             ? null
-            : (float)$prizePercentRaw;
+            : (int)$prizeCountRaw;
 
         $users = $this->getTableLocator()->get('Users');
         $tournamentsTable = $this->getTableLocator()->get('Tournaments');
@@ -139,9 +139,9 @@ class SetupKopargaonCommand extends Command
             'rules' => 'Win = 3 points, draw = 1 point, loss = 0 points.',
             'start_time' => date('Y-m-d H:i:s'),
         ];
-        if ($prizePercent !== null) {
-            $data['prize_winners_percent'] = $prizePercent;
-            $io->out(sprintf('<info>Prize facility:</info> top %s%% of players get paid', $prizePercent));
+        if ($prizeCount !== null) {
+            $data['prize_winners_count'] = $prizeCount;
+            $io->out(sprintf('<info>Prize facility:</info> top %d players get paid', $prizeCount));
         } else {
             $data['prize_breakdown'] = $payouts->templateRows('top3');
             $io->out('<info>Prize facility:</info> default top-3 ladder');

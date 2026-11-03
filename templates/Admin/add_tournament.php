@@ -4,7 +4,6 @@
  *
  * @var \App\View\AppView $this
  * @var \App\Model\Entity\Tournament $tournament
- * @var array<string> $templates
  * @var array<\App\Model\Entity\User> $organizers
  */
 
@@ -22,7 +21,6 @@ $this->assign('title', 'New contest');
         <div class="col-lg-8">
             <?= $this->element('admin/contest_form', [
                 'tournament' => $tournament,
-                'templates' => $templates,
                 'organizers' => $organizers,
                 'showPlatformFee' => true,
                 'formAction' => ['controller' => 'Admin', 'action' => 'addTournament'],

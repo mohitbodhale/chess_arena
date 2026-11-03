@@ -65,6 +65,11 @@ $isOver = ($state['status'] ?? 'Live') !== 'Live';
                         </div>
                     </div>
                     <div class="clock" data-clock="w"><?= $this->Number->format((int)($state['white_time_ms'] ?? 0) / 1000, ['precision' => 0]) ?></div>
+                    <?php if ($canPlay) : ?>
+                        <button type="button" class="btn-arena is-ghost btn-sm" id="arena-reconnect" style="margin-left:.5rem;">
+                            <i class="fa fa-refresh"></i> Reconnect
+                        </button>
+                    <?php endif; ?>
                 </div>
             </div>
 
@@ -145,6 +150,7 @@ $isOver = ($state['status'] ?? 'Live') !== 'Live';
         readOnly: <?= $canPlay ? 'false' : 'true' ?>,
         moveUrl: <?= json_encode($this->Url->build(['controller' => 'Matches', 'action' => 'move', $matchId]), JSON_THROW_ON_ERROR) ?>,
         stateUrl: <?= json_encode($this->Url->build(['controller' => 'Matches', 'action' => 'state', $matchId]), JSON_THROW_ON_ERROR) ?>,
+        reconnectUrl: <?= json_encode($this->Url->build(['controller' => 'Matches', 'action' => 'reconnect', $matchId]), JSON_THROW_ON_ERROR) ?>,
         resignUrl: <?= json_encode($this->Url->build(['controller' => 'Matches', 'action' => 'resign', $matchId]), JSON_THROW_ON_ERROR) ?>,
         drawUrl: <?= json_encode($this->Url->build(['controller' => 'Matches', 'action' => 'draw', $matchId]), JSON_THROW_ON_ERROR) ?>,
         whiteWins: <?= $isWhite ? 'true' : 'false' ?>,

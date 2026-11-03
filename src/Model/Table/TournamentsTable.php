@@ -119,13 +119,19 @@ class TournamentsTable extends Table
         $validator
             ->decimal('prize_pool')
             ->greaterThanOrEqual('prize_pool', 0)
-            ->notEmptyString('prize_pool');
+            ->notEmptyString('prize_pool')
+            ->allowEmptyString('prize_pool');
 
         $validator
             ->decimal('platform_fee')
             ->greaterThanOrEqual('platform_fee', 0)
             ->lessThanOrEqual('platform_fee', 100)
             ->allowEmptyString('platform_fee');
+
+        $validator
+            ->decimal('prize_winners_count')
+            ->greaterThanOrEqual('prize_winners_count', 1)
+            ->allowEmptyString('prize_winners_count');
 
         $validator
             ->decimal('platform_revenue')

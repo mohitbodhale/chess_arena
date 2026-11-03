@@ -158,6 +158,49 @@ class MatchesController extends AppController
     }
 
     /**
+     * Reconnect to a live match and return the current server state.
+     * Used after a browser reload or connection drop so the player resumes
+     * with the same position, same remaining time, and same turn.
+     *
+     * @param string|null $id The match.
+     * @return \Cake\Http\Response
+     */
+    public function reconnect(?string $id = null): Response
+    {
+        $match = $this->loadMatch($id);
+        $this->Authorization->authorize($match, 'view');
+
+        $userId = $this->currentUserId();
+        $isPlayer = $userId !== null && (
+            (int)$match->get('white_player_id') === $userId
+            || (int)$match->get('black_player_id') === $userId
+        );
+
+        if (!$isPlayer) {
+            return $this->jsonResponse([
+                'ok' => false,
+                'message' => 'You are not a player of this game.',
+                'state' => null,
+            ]);
+        }
+
+        if ($match->get('status') !== 'Live') {
+            return $this->jsonResponse([
+                'ok' => false,
+                'message' => 'This game is already finished.',
+                'state' => $this->matchService->state($match),
+            ]);
+        }
+
+        return $this->jsonResponse([
+            'ok' => true,
+            'message' => 'Reconnected. Position and clock restored from the server.',
+            'state' => $this->matchService->state($match),
+            'restored' => true,
+        ]);
+    }
+
+    /**
      * The legal destinations of a square.
      *
      * @param string|null $id The match.

@@ -409,6 +409,10 @@
         clock.black = next.black_time_ms;
         gameOver = !!next.game_over;
 
+        // Restart the local turn timer from the restored server time so the
+        // clock does not drift after a reconnect or page reload.
+        turnStartedAt = Date.now();
+
         selected = null;
         targets = [];
 
@@ -533,6 +537,41 @@
             if (window.confirm('Agree a draw with the opponent?')) {
                 postAction(config.drawUrl, 'The game ended in a draw.');
             }
+        });
+    }
+
+    var reconnectButton = document.getElementById('arena-reconnect');
+    if (reconnectButton && config.reconnectUrl) {
+        reconnectButton.addEventListener('click', function () {
+            reconnectButton.disabled = true;
+            setStatus('Reconnecting…');
+            fetch(config.reconnectUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-Token': csrfToken(),
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: '{}'
+            })
+                .then(function (response) {
+                    return response.json();
+                })
+                .then(function (payload) {
+                    reconnectButton.disabled = false;
+                    if (payload.ok && payload.state) {
+                        applyState(payload.state);
+                        setStatus(payload.message || 'Reconnected.');
+                        turnStartedAt = Date.now();
+                    } else {
+                        setStatus(payload.message || 'Reconnect failed.');
+                    }
+                })
+                .catch(function () {
+                    reconnectButton.disabled = false;
+                    setStatus('Reconnect failed. Check your connection.');
+                });
         });
     }
 

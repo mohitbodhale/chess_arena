@@ -198,44 +198,57 @@ class PayoutService
     }
 
     /**
-     * Build a prize ladder that pays exactly the given share of the players.
+     * Build a prize ladder that pays exactly the given number of players.
      *
-     * Ranks 1..N are generated where N is the rounded-up number of winners
-     * (`ceil(maxSlots * percent / 100)`). The percentages decrease by rank so
-     * the strongest player receives the largest share and the whole ladder
-     * sums to 100% of the distributable pool.
+     * The winner (rank 1) always receives 50% of the distributable prize pool.
+     * The remaining 50% is shared by ranks 2..N in decreasing order by rank,
+     * using the ratio (N-1):(N-2):...:1 so that every higher rank receives more
+     * than the one below it and the whole ladder sums to 100%.
      *
      * The platform commission is not part of this calculation: it is computed
      * separately from the entry fee and the platform fee, so changing the
-     * winner share never changes what the arena keeps.
+     * number of winners never changes what the arena keeps.
      *
      * @param int $maxSlots Total seats of the contest.
-     * @param float $percent Share of the players that receive a prize (0-100).
+     * @param int $winnerCount Number of players that receive a prize (1-maxSlots).
      * @return array<int, array{rank: int, label: string, percent: float}>
      */
-    public function breakdownByWinnerPercent(int $maxSlots, float $percent): array
+    public function breakdownByWinnerCount(int $maxSlots, int $winnerCount): array
     {
-        $percent = max(0.0, min(100.0, $percent));
-        if ($percent <= 0.0 || $maxSlots <= 0) {
+        $winnerCount = max(1, min($winnerCount, $maxSlots));
+        if ($maxSlots <= 0 || $winnerCount < 1) {
             return [];
         }
 
-        $winnerCount = (int)ceil($maxSlots * $percent / 100.0);
-        if ($winnerCount < 1) {
-            $winnerCount = 1;
-        }
-        if ($winnerCount > $maxSlots) {
-            $winnerCount = $maxSlots;
+        $rows = [];
+        if ($winnerCount === 1) {
+            $rows[] = [
+                'rank' => 1,
+                'label' => $this->winnerLabel(1, 1),
+                'percent' => 100.0,
+            ];
+
+            return $rows;
         }
 
-        $totalWeight = ($winnerCount * ($winnerCount + 1)) / 2;
-        $rows = [];
-        for ($rank = 1; $rank <= $winnerCount; $rank++) {
+        // Winner always takes 50%.
+        $rows[] = [
+            'rank' => 1,
+            'label' => $this->winnerLabel(1, $winnerCount),
+            'percent' => 50.0,
+        ];
+
+        // The remaining 50% is split among ranks 2..N in decreasing order,
+        // using the ratio (N-1):(N-2):...:1.
+        $remainingWinners = $winnerCount - 1;
+        $totalWeight = ($remainingWinners * ($remainingWinners + 1)) / 2;
+
+        for ($rank = 2; $rank <= $winnerCount; $rank++) {
             $weight = $winnerCount - $rank + 1;
             $rows[] = [
                 'rank' => $rank,
                 'label' => $this->winnerLabel($rank, $winnerCount),
-                'percent' => round(($weight / $totalWeight) * 100.0, 4),
+                'percent' => round((50.0 * $weight) / $totalWeight, 4),
             ];
         }
 

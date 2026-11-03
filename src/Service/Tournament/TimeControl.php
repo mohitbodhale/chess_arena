@@ -14,6 +14,8 @@ final class TimeControl
     public const BULLET = 'Bullet';
     public const BLITZ = 'Blitz';
     public const RAPID = 'Rapid';
+    public const TEN_MIN = '10 min';
+    public const TWENTY_MIN = '20 min';
 
     /**
      * Category metadata.
@@ -44,6 +46,22 @@ final class TimeControl
             'display' => '10+5',
             'blurb' => 'Ten minutes with a five second increment. Deep, calculated play.',
             'accent' => '#5B8DEF',
+        ],
+        self::TEN_MIN => [
+            'label' => '10 min',
+            'base' => 600,
+            'increment' => 0,
+            'display' => '10+0',
+            'blurb' => 'Ten minutes a side with no increment. Clean, timed chess.',
+            'accent' => '#7C4DFF',
+        ],
+        self::TWENTY_MIN => [
+            'label' => '20 min',
+            'base' => 1200,
+            'increment' => 0,
+            'display' => '20+0',
+            'blurb' => 'Twenty minutes a side with no increment. Slower, strategic play.',
+            'accent' => '#FF9100',
         ],
     ];
 

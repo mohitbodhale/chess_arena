@@ -24,7 +24,7 @@ use Cake\ORM\Entity;
  * @property int $base_seconds
  * @property int $increment_seconds
      * @property string|null $rules
-     * @property float|null $prize_winners_percent
+     * @property int|null $prize_winners_count
      * @property \Cake\I18n\DateTime $start_time
  * @property \Cake\I18n\DateTime $created_at
  *
@@ -59,7 +59,7 @@ class Tournament extends Entity
         'base_seconds' => true,
         'increment_seconds' => true,
         'rules' => true,
-        'prize_winners_percent' => true,
+        'prize_winners_count' => true,
         'start_time' => true,
         'created_at' => true,
         'organizer' => true,

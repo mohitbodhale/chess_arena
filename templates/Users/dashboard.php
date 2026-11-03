@@ -24,6 +24,9 @@ $this->assign('title', 'My wallet');
         <a class="btn-arena" href="<?= $this->Url->build('/lobby') ?>">
             <i class="fa fa-bolt"></i> Find a contest
         </a>
+        <a class="btn-arena is-ghost" href="<?= $this->Url->build(['controller' => 'Users', 'action' => 'deposit']) ?>">
+            <i class="fa fa-wallet"></i> Add money
+        </a>
     </div>
 
     <div class="row">

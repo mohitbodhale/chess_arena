@@ -76,9 +76,9 @@ class TournamentService
 
         $breakdown = $data['prize_breakdown'] ?? null;
         if (!is_array($breakdown) || $breakdown === []) {
-            $winnerPercent = (float)($data['prize_winners_percent'] ?? 0.0);
-            if ($winnerPercent > 0.0) {
-                $breakdown = $this->payouts->breakdownByWinnerPercent($maxSlots, $winnerPercent);
+            $winnerCount = (int)($data['prize_winners_count'] ?? 0);
+            if ($winnerCount > 0) {
+                $breakdown = $this->payouts->breakdownByWinnerCount($maxSlots, $winnerCount);
             } else {
                 $breakdown = $this->payouts->defaultBreakdown($maxSlots);
             }

@@ -4,7 +4,6 @@
  *
  * @var \App\View\AppView $this
  * @var \App\Model\Entity\Tournament $tournament
- * @var array<string> $templates
  * @var string $formAction
  * @var array<\App\Model\Entity\User> $organizers
  * @var bool $showPlatformFee
@@ -41,6 +40,19 @@ if ($startValue instanceof \Cake\I18n\DateTime) {
     </div>
     <div class="card-body">
         <?= $this->Form->create($tournament, ['url' => $formAction]) ?>
+        <?php $errors = $tournament->getErrors(); ?>
+        <?php if ($errors !== [] && $errors !== null) : ?>
+            <div class="error" style="margin:0 0 1rem;padding:.75rem 1rem;background:var(--bg-elev-1);border:1px solid var(--danger);border-radius:6px;color:var(--danger);font-size:.85rem;">
+                <strong>Please fix the following:</strong>
+                <ul style="margin:.4rem 0 0;padding-left:1.2rem;">
+                    <?php foreach ($errors as $field => $messages) : ?>
+                        <?php foreach ((array)$messages as $message) : ?>
+                            <li><?= h((string)$field) ?>: <?= h((string)$message) ?></li>
+                        <?php endforeach; ?>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+        <?php endif; ?>
         <div class="row">
             <div class="col-md-7">
                 <div class="field">
@@ -109,21 +121,10 @@ if ($startValue instanceof \Cake\I18n\DateTime) {
         <div class="row">
             <div class="col-md-5">
                 <div class="field">
-                    <?= $this->Form->label('prize_template', 'Payout ladder') ?>
-                    <?= $this->Form->select('prize_template', array_combine(
-                        $templates,
-                        array_map(
-                            fn ($key) => match ($key) {
-                                'top1' => 'Winner takes all',
-                                'top3' => 'Top 3 · 50 / 30 / 20',
-                                'top5' => 'Top 5 · 40 / 25 / 15 / 12 / 8',
-                                'top10' => 'Top 10 · shared ladder',
-                                default => $key,
-                            },
-                            $templates,
-                        ),
-                    ), ['class' => 'form-control']) ?>
-                    <div class="help">This is the ladder players see on the contest card.</div>
+                    <label>&nbsp;</label>
+                    <button type="submit" class="btn-arena" style="width:100%;">
+                        <i class="fa fa-check"></i> Save contest
+                    </button>
                 </div>
             </div>
             <?php if ($organizerOptions !== []) : ?>
@@ -134,6 +135,8 @@ if ($startValue instanceof \Cake\I18n\DateTime) {
                             'class' => 'form-control',
                             'value' => $organizerValue,
                         ]) ?>
+                    </div>
+                </div>
                     </div>
                 </div>
             <?php endif; ?>
@@ -154,16 +157,17 @@ if ($startValue instanceof \Cake\I18n\DateTime) {
             </div>
             <div class="col-md-4">
                 <div class="field">
-                    <?= $this->Form->label('prize_winners_percent', 'Prize winners (% of players)') ?>
-                    <?= $this->Form->text('prize_winners_percent', [
+                    <?= $this->Form->label('prize_winners_count', 'Prize winners (number of players)') ?>
+                    <?= $this->Form->text('prize_winners_count', [
                         'class' => 'form-control',
-                        'value' => $tournament->get('prize_winners_percent') ?? '',
+                        'value' => $tournament->get('prize_winners_count') ?? '',
                         'placeholder' => 'Leave empty to use the payout ladder above',
                     ]) ?>
                     <div class="help">
-                        Share of the filled seats that receive a prize (for example 40 pays
-                        the top 40% of the players). The arena keeps its platform fee no
-                        matter how the pool is split.
+                        Number of players that receive a prize (for example 6 pays the
+                        top 6 players). The winner always gets 50% of the pool and the
+                        rest share it in decreasing order. The arena keeps its platform
+                        fee no matter how many winners there are.
                     </div>
                 </div>
             </div>

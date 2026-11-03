@@ -239,15 +239,23 @@ class AdminController extends AppController
                 $organizerId = (int)$this->currentUserId();
             }
             $data['organizer_id'] = $organizerId;
-            $data['prize_breakdown'] = $this->payoutService->templateRows(
-                (string)($data['prize_template'] ?? 'top3'),
-            );
+
+            // Prize winners count drives distribution. If not set, default ladder.
+            $winnerCount = (int)($data['prize_winners_count'] ?? 0);
+            if ($winnerCount > 0) {
+                $data['prize_breakdown'] = $this->payoutService->breakdownByWinnerCount(
+                    (int)($data['max_slots'] ?? 64),
+                    $winnerCount,
+                );
+            } else {
+                $data['prize_breakdown'] = $this->payouts->defaultBreakdown((int)($data['max_slots'] ?? 64));
+            }
 
             try {
                 $tournament = $this->tournamentService->create($data, (int)$data['organizer_id']);
                 $this->Flash->success(sprintf('The contest "%s" is live for entries.', $tournament->get('title')));
 
-                return $this->redirect(['action' => 'slots', $tournament->get('id')]);
+            return $this->redirect(['action' => 'slots', $tournament->get('id')]);
             } catch (\RuntimeException $exception) {
                 $this->Flash->error($exception->getMessage());
             }
@@ -255,7 +263,6 @@ class AdminController extends AppController
 
         $this->set([
             'tournament' => $tournament,
-            'templates' => $this->payoutService->templates(),
             'organizers' => $this->Users->find()->where(['Users.role_id IN' => [1, 2]])->all(),
             'currentUser' => $this->currentUser(),
             'currentRole' => $this->currentUser()?->getRoleName(),
@@ -275,14 +282,16 @@ class AdminController extends AppController
 
         if ($this->request->is('post')) {
             $data = $this->request->getData();
-            $winnerPercent = (float)($data['prize_winners_percent'] ?? 0.0);
-            if ($winnerPercent > 0.0) {
-                $data['prize_breakdown'] = $this->payoutService->breakdownByWinnerPercent(
+            $winnerCount = (int)($data['prize_winners_count'] ?? 0);
+            if ($winnerCount > 0) {
+                $data['prize_breakdown'] = $this->payoutService->breakdownByWinnerCount(
                     (int)($data['max_slots'] ?? $tournament->get('max_slots')),
-                    $winnerPercent,
+                    $winnerCount,
                 );
-            } elseif (!empty($data['prize_template'])) {
-                $data['prize_breakdown'] = $this->payoutService->templateRows((string)$data['prize_template']);
+            }
+            // Normalise empty prize_winners_count to null for the integer column.
+            if (!isset($data['prize_winners_count']) || (string)$data['prize_winners_count'] === '') {
+                $data['prize_winners_count'] = null;
             }
             $tournament = $this->Tournaments->patchEntity($tournament, $data);
             if ($this->Tournaments->save($tournament)) {
@@ -290,12 +299,11 @@ class AdminController extends AppController
 
                 return $this->redirect(['action' => 'tournaments']);
             }
-            $this->Flash->error('The contest could not be updated.');
+            $this->Flash->error('The contest could not be updated. Please check the form errors.');
         }
 
         $this->set([
             'tournament' => $tournament,
-            'templates' => $this->payoutService->templates(),
             'organizers' => $this->Users->find()->where(['Users.role_id IN' => [1, 2]])->all(),
             'currentUser' => $this->currentUser(),
             'currentRole' => $this->currentUser()?->getRoleName(),
@@ -434,6 +442,95 @@ class AdminController extends AppController
     }
 
     /**
+     * List deposit requests awaiting admin approval.
+     *
+     * @return void
+     */
+    public function depositRequests(): void
+    {
+        $query = $this->getTableLocator()->get('DepositRequests')
+            ->find()
+            ->contain(['Users'])
+            ->order(['DepositRequests.status' => 'ASC', 'DepositRequests.created_at' => 'DESC']);
+
+        $status = (string)($this->request->getQuery('status') ?? 'pending');
+        if ($status !== '') {
+            $query->where(['DepositRequests.status' => $status]);
+        }
+
+        $requests = $this->paginate($query, ['limit' => 25]);
+
+        $this->set([
+            'requests' => $requests,
+            'status' => $status,
+            'currentUser' => $this->currentUser(),
+            'currentRole' => $this->currentUser()?->getRoleName(),
+        ]);
+    }
+
+    /**
+     * Approve or reject a deposit request and credit the player wallet.
+     *
+     * @return \Cake\Http\Response|null
+     */
+    public function approveDeposit()
+    {
+        $this->request->allowMethod(['post']);
+
+        $requestId = (int)$this->request->getData('request_id');
+        $action = (string)$this->request->getData('action');
+
+        $requests = $this->getTableLocator()->get('DepositRequests');
+        $depositRequest = $requests->get($requestId, ['contain' => ['Users']]);
+
+        if (!$depositRequest->isPending()) {
+            $this->Flash->error('This deposit request was already processed.');
+
+            return $this->redirect(['action' => 'depositRequests']);
+        }
+
+        if ($action === 'approve') {
+            $wallet = new WalletService();
+            $user = $depositRequest->get('user');
+
+            if ($wallet->credit(
+                $user,
+                (float)$depositRequest->get('amount'),
+                'deposit',
+                sprintf('Deposit request #%d approved', $requestId),
+                null,
+                $this->currentUserId(),
+                false,
+            )) {
+                $users = $this->getTableLocator()->get('Users');
+                $users->save($user);
+
+                $depositRequest->set([
+                    'status' => 'approved',
+                    'approved_by' => $this->currentUserId(),
+                    'approved_at' => date('Y-m-d H:i:s'),
+                ]);
+                $requests->save($depositRequest);
+
+                $this->Flash->success(sprintf(
+                    '₹%s credited to %s.',
+                    number_format((float)$depositRequest->get('amount'), 2),
+                    $user->get('username'),
+                ));
+            } else {
+                $this->Flash->error('The deposit could not be credited.');
+            }
+        } elseif ($action === 'reject') {
+            $depositRequest->set('status', 'rejected');
+            $requests->save($depositRequest);
+
+            $this->Flash->success('Deposit request rejected.');
+        }
+
+        return $this->redirect(['action' => 'depositRequests']);
+    }
+
+    /**
      * Credit or debit the wallet of a player.
      *
      * @return \Cake\Http\Response|null
@@ -447,12 +544,11 @@ class AdminController extends AppController
         $this->Authorization->authorize($user, 'adjustWallet');
 
         $amount = round((float)$this->request->getData('amount'), 2);
-        $description = (string)($this->request->getData('description') ?? 'Manual adjustment');
+        $description = (string)$this->request->getData('description') ?? 'Manual adjustment';
         $toWinnings = (bool)$this->request->getData('to_winnings');
 
         if ($amount === 0.0) {
             $this->Flash->error('The amount must not be zero.');
-
             return $this->redirect(['action' => 'wallet']);
         }
 
