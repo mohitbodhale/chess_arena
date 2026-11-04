@@ -48,6 +48,8 @@
         banner: document.getElementById('arena-banner'),
         status: document.getElementById('arena-status'),
         board: document.getElementById('arena-board'),
+        matchEndModal: document.getElementById('arena-match-end-modal'),
+        clockWarn: document.getElementById('arena-clock-warn'),
     };
 
     var boardAnimation = {
@@ -423,6 +425,7 @@
         renderClocks();
         renderTurn(next.turn);
         renderBanner(next);
+        renderMatchEnd(next);
     }
 
     function renderMoves() {
@@ -457,15 +460,25 @@
     }
 
     function renderClocks() {
+        var runningLow = false;
         if (el.whiteClock) {
             el.whiteClock.textContent = formatTime(clock.white);
             el.whiteClock.classList.toggle('is-running', state.turn === 'w' && !gameOver);
             el.whiteClock.classList.toggle('is-low', clock.white < 30000);
+            if (state.turn === 'w' && clock.white < 30000) {
+                runningLow = true;
+            }
         }
         if (el.blackClock) {
             el.blackClock.textContent = formatTime(clock.black);
             el.blackClock.classList.toggle('is-running', state.turn === 'b' && !gameOver);
             el.blackClock.classList.toggle('is-low', clock.black < 30000);
+            if (state.turn === 'b' && clock.black < 30000) {
+                runningLow = true;
+            }
+        }
+        if (el.clockWarn) {
+            el.clockWarn.classList.toggle('is-showing', runningLow && !gameOver);
         }
     }
 
@@ -487,8 +500,8 @@
 
         if (!next.result || next.result === 'Pending') {
             if (next.in_check) {
-                el.banner.classList.add('is-open', 'is-draw');
-                el.banner.textContent = 'Check!';
+                el.banner.classList.add('is-open', 'is-check');
+                el.banner.textContent = 'You are in check!';
             }
 
             return;
@@ -496,10 +509,106 @@
 
         el.banner.classList.add('is-open');
         var won = next.result === 'White_Win' ? config.whiteWins : next.result === 'Black_Win' ? config.blackWins : false;
+        var isMate = next.termination === 'checkmate';
         el.banner.classList.add(won ? 'is-win' : (next.result === 'Draw' ? 'is-draw' : 'is-loss'));
-        el.banner.textContent = won
-            ? 'You won ' + (next.termination ? '(' + next.termination.replace(/_/g, ' ') + ')' : '')
-            : (next.result === 'Draw' ? 'The game ended in a draw.' : 'You lost this game.');
+        if (won) {
+            el.banner.textContent = isMate
+                ? 'Checkmate! You won.'
+                : 'You won ' + (next.termination ? '(' + next.termination.replace(/_/g, ' ') + ')' : '');
+        } else if (next.result === 'Draw') {
+            el.banner.textContent = 'The game ended in a draw.';
+        } else {
+            el.banner.textContent = isMate
+                ? 'Checkmate! You lost.'
+                : 'You lost this game.';
+        }
+    }
+
+    function renderMatchEnd(next) {
+        if (!el.matchEndModal || !next.result || next.result === 'Pending') {
+            el.matchEndModal.classList.remove('is-open');
+            return;
+        }
+
+        var won = next.result === 'White_Win' ? config.whiteWins :
+                  next.result === 'Black_Win' ? config.blackWins : false;
+        var isDraw = next.result === 'Draw';
+        var isMate = next.termination === 'checkmate';
+        var meColor = config.whiteWins ? 'w' : 'b';
+
+        var badge = document.getElementById('arena-end-badge');
+        var title = document.getElementById('arena-end-title');
+        var whitePill = document.getElementById('arena-end-white-pill');
+        var blackPill = document.getElementById('arena-end-black-pill');
+        var drawPill = document.getElementById('arena-end-draw-pill');
+        var resultText = document.getElementById('arena-end-result-text');
+        var durationText = document.getElementById('arena-end-duration');
+        var terminationText = document.getElementById('arena-end-termination');
+        var whiteNameEl = document.getElementById('arena-end-white-name');
+        var blackNameEl = document.getElementById('arena-end-black-name');
+        var whiteRatingEl = document.getElementById('arena-end-white-rating');
+        var blackRatingEl = document.getElementById('arena-end-black-rating');
+        var rematchBtn = document.getElementById('arena-end-rematch');
+        var lobbyBtn = document.getElementById('arena-end-lobby');
+
+        whiteNameEl.textContent = hEscape(config.whiteName || 'White');
+        blackNameEl.textContent = hEscape(config.blackName || 'Black');
+
+        var whiteRating = (next.white_player && next.white_player.rating) || config.whiteRating || 0;
+        var blackRating = (next.black_player && next.black_player.rating) || config.blackRating || 0;
+        if (whiteRatingEl) whiteRatingEl.textContent = parseInt(whiteRating, 10) || 0;
+        if (blackRatingEl) blackRatingEl.textContent = parseInt(blackRating, 10) || 0;
+
+        if (badge) {
+            badge.className = 'modal-badge';
+            if (won) {
+                badge.classList.add('is-win');
+                badge.textContent = '🏆';
+            } else if (isDraw) {
+                badge.classList.add('is-draw');
+                badge.textContent = '🤝';
+            } else {
+                badge.classList.add('is-loss');
+                badge.textContent = '💔';
+            }
+        }
+
+        if (title) {
+            var mateLabel = isMate ? 'Checkmate! ' : '';
+            title.textContent = won ? mateLabel + 'You won!' : (isDraw ? 'Draw!' : mateLabel + 'You lost.');
+        }
+
+        if (whitePill) {
+            whitePill.className = 'result-pill' + (won ? ' is-win' : '');
+            whitePill.querySelector('b').textContent = won ? '+3' : (isDraw ? '+1' : '0');
+        }
+        if (blackPill) {
+            blackPill.className = 'result-pill' + (next.result === 'Black_Win' && !config.whiteWins ? ' is-win' : (won ? ' is-loss' : (isDraw ? '' : ' is-win')));
+            blackPill.querySelector('b').textContent = (next.result === 'Black_Win' && !config.whiteWins) ? '+3' : (won ? '0' : (isDraw ? '+1' : '+3'));
+        }
+        if (drawPill) {
+            drawPill.style.display = isDraw ? 'flex' : 'none';
+        }
+
+        if (resultText) {
+            resultText.textContent = next.result.replace(/_/g, ' ');
+        }
+
+        if (durationText && next.duration_seconds !== undefined) {
+            durationText.textContent = formatTime(next.duration_seconds * 1000);
+        }
+
+        if (terminationText) {
+            terminationText.textContent = next.termination ? next.termination.replace(/_/g, ' ') : '—';
+        }
+
+        el.matchEndModal.classList.add('is-open');
+    }
+
+    function hEscape(text) {
+        var div = document.createElement('div');
+        div.textContent = text || '';
+        return div.innerHTML;
     }
 
     function setStatus(message) {
@@ -537,6 +646,23 @@
             if (window.confirm('Agree a draw with the opponent?')) {
                 postAction(config.drawUrl, 'The game ended in a draw.');
             }
+        });
+    }
+
+    var rematchBtn = document.getElementById('arena-end-rematch');
+    if (rematchBtn) {
+        rematchBtn.addEventListener('click', function () {
+            el.matchEndModal.classList.remove('is-open');
+            if (config.stateUrl) {
+                window.location.reload();
+            }
+        });
+    }
+
+    var lobbyBtn = document.getElementById('arena-end-lobby');
+    if (lobbyBtn) {
+        lobbyBtn.addEventListener('click', function () {
+            window.location.href = '/lobby';
         });
     }
 

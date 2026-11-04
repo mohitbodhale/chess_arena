@@ -60,7 +60,7 @@ $this->assign('title', 'Standings');
                             </td>
                             <td class="mono tiny"><?= number_format((float)$registration->get('time_bonus'), 1) ?></td>
                             <td class="points"><?= number_format((float)$registration->get('score'), 1) ?></td>
-                            <td class="mono tiny muted"><?= h($matchDurations[$userId] ?? '—') ?></td>
+                            <td class="mono tiny muted"><?= h($matchDurations[$userId] !== null ? gmdate('i:s', (int)$matchDurations[$userId]) : '—') ?></td>
                             <td class="mono tiny muted">
                                 <?= h((string)($tieBreakBasis[$position] ?? '-')) ?>
                             </td>

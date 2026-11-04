@@ -142,6 +142,63 @@ $isOver = ($state['status'] ?? 'Live') !== 'Live';
     </div>
 </div>
 
+<div class="clock-warn" id="arena-clock-warn">
+    <span class="dot"></span>
+    <span>Time is running out!</span>
+</div>
+
+<div class="match-end-modal" id="arena-match-end-modal">
+    <div class="match-end-card">
+        <div class="modal-head">
+            <div class="modal-badge" id="arena-end-badge"></div>
+            <h2><span id="arena-end-title">Match over</span></h2>
+        </div>
+        <div class="match-meta">
+            <div class="side" id="arena-side-white">
+                <div class="avatar" id="arena-end-white-avatar"></div>
+                <div class="name" id="arena-end-white-name">White</div>
+                <div class="rating" id="arena-end-white-rating">—</div>
+            </div>
+            <div class="vs">vs</div>
+            <div class="side" id="arena-side-black">
+                <div class="avatar" id="arena-end-black-avatar"></div>
+                <div class="name" id="arena-end-black-name">Black</div>
+                <div class="rating" id="arena-end-black-rating">—</div>
+            </div>
+        </div>
+        <div class="result-strip">
+            <div class="result-pill" id="arena-end-white-pill">
+                <span style="font-size:.7rem;color:var(--text-mute);text-transform:uppercase;letter-spacing:.1em;">White</span>
+                <b id="arena-end-white-score">—</b>
+            </div>
+            <div class="result-pill" id="arena-end-draw-pill" style="display:none;">
+                <span style="font-size:.7rem;color:var(--text-mute);text-transform:uppercase;letter-spacing:.1em;">Draw</span>
+                <b id="arena-end-draw-score">—</b>
+            </div>
+            <div class="result-pill" id="arena-end-black-pill">
+                <span style="font-size:.7rem;color:var(--text-mute);text-transform:uppercase;letter-spacing:.1em;">Black</span>
+                <b id="arena-end-black-score">—</b>
+            </div>
+        </div>
+        <div class="detail-row">
+            <span>Result</span>
+            <span id="arena-end-result-text" style="color:var(--text);font-weight:700;">—</span>
+        </div>
+        <div class="detail-row">
+            <span>Duration</span>
+            <span id="arena-end-duration">—</span>
+        </div>
+        <div class="detail-row">
+            <span>Termination</span>
+            <span id="arena-end-termination">—</span>
+        </div>
+        <div class="modal-actions">
+            <button type="button" class="btn-arena is-muted" id="arena-end-rematch">Rematch</button>
+            <button type="button" class="btn-arena is-muted" id="arena-end-lobby">Lobby</button>
+        </div>
+    </div>
+</div>
+
 <?php $this->start('script'); ?>
 <script>
     window.ARENA_BOARD = {
@@ -154,7 +211,11 @@ $isOver = ($state['status'] ?? 'Live') !== 'Live';
         resignUrl: <?= json_encode($this->Url->build(['controller' => 'Matches', 'action' => 'resign', $matchId]), JSON_THROW_ON_ERROR) ?>,
         drawUrl: <?= json_encode($this->Url->build(['controller' => 'Matches', 'action' => 'draw', $matchId]), JSON_THROW_ON_ERROR) ?>,
         whiteWins: <?= $isWhite ? 'true' : 'false' ?>,
-        blackWins: <?= $isWhite ? 'false' : 'true' ?>
+        blackWins: <?= $isWhite ? 'false' : 'true' ?>,
+        whiteName: <?= json_encode($whiteName) ?>,
+        blackName: <?= json_encode($blackName) ?>,
+        whiteRating: <?= (int)($match->get('white_player')['rating'] ?? 0) ?>,
+        blackRating: <?= (int)($match->get('black_player')['rating'] ?? 0) ?>
     };
 </script>
 <?= $this->Html->script('chess.bundle.js') ?>
